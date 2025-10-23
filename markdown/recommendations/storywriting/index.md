@@ -80,6 +80,39 @@ const recommendedModel = computed(() => {
 const isRecommended = computed(() => {
   return recommendedModel.value.model !== 'Not recommended'
 })
+
+/* Normalized detection + canonical classes */
+const normalizedModel = computed(() => recommendedModel.value.model.toLowerCase())
+
+const isBF16orGPTOSS = computed(() =>
+  normalizedModel.value.includes('bf16') || normalizedModel.value.includes('gpt oss')
+)
+
+const isQ6orQ8 = computed(() =>
+  normalizedModel.value.includes('q6') || normalizedModel.value.includes('q8')
+)
+
+const isQ4 = computed(() => normalizedModel.value.includes('q4'))
+
+const is4b = computed(() => normalizedModel.value.includes('4b'))
+
+const selectorClass = computed(() => {
+  if (!isRecommended.value) return { 'not-recommended': true }
+  if (is4b.value) return { 'recommended-4b': true }
+  if (isBF16orGPTOSS.value) return { 'recommended-success': true }
+  if (isQ6orQ8.value) return { 'recommended-caution': true }
+  if (isQ4.value) return { 'recommended-warning': true }
+  return {}
+})
+
+const modelNameClasses = computed(() => {
+  if (!isRecommended.value) return { 'not-recommended': true }
+  if (is4b.value) return { 'recommended-4b': true }
+  if (isBF16orGPTOSS.value) return { 'recommended-success': true }
+  if (isQ6orQ8.value) return { 'recommended-caution': true }
+  if (isQ4.value) return { 'recommended-warning': true }
+  return {}
+})
 </script>
 
 <style scoped>
@@ -107,14 +140,17 @@ const isRecommended = computed(() => {
 }
 
 /* Example: Specific border color based on recommendation */
-.model-selector.recommended-high {
+.model-selector.recommended-success {
   border-color: var(--vp-c-green-2);
 }
-.model-selector.recommended-medium {
-  border-color: var(--vp-c-blue-2);
-}
-.model-selector.recommended-low {
+.model-selector.recommended-caution {
   border-color: var(--vp-c-yellow-2);
+}
+.model-selector.recommended-warning {
+  border-color: var(--vp-c-orange-2);
+}
+.model-selector.recommended-4b {
+  border-color: var(--vp-c-purple-2);
 }
 
 .model-selector h3 {
@@ -196,45 +232,33 @@ const isRecommended = computed(() => {
 }
 
 /* Dynamically applied styles based on recommendation level */
-.result .model-name.recommended-high {
+.result .model-name.recommended-success {
   background-color: var(--vp-c-green-soft);
   color: var(--vp-c-green-2);
   border-color: var(--vp-c-green-2);
 }
-
-.result .model-name.recommended-medium {
-  background-color: var(--vp-c-blue-soft);
-  color: var(--vp-c-blue-2);
-  border-color: var(--vp-c-blue-2);
-}
-
-.result .model-name.recommended-low {
+ 
+.result .model-name.recommended-caution {
   background-color: var(--vp-c-yellow-soft);
   color: var(--vp-c-yellow-2);
   border-color: var(--vp-c-yellow-2);
 }
-
-.result .model-name.recommended-very-low {
+ 
+.result .model-name.recommended-warning {
   background-color: var(--vp-c-orange-soft);
   color: var(--vp-c-orange-2);
   border-color: var(--vp-c-orange-2);
 }
-
+ 
 .result .model-name.recommended-4b {
   background-color: var(--vp-c-purple-soft);
   color: var(--vp-c-purple-2);
   border-color: var(--vp-c-purple-2);
 }
-
+ 
 </style>
 
-<div class="model-selector" :class="{
-  'recommended-high': recommendedModel.model.includes('bf16'),
-  'recommended-medium': recommendedModel.model.includes('Q8') && !recommendedModel.model.includes('bf16'),
-  'recommended-low': recommendedModel.model.includes('Q6'),
-  'recommended-very-low': recommendedModel.model.includes('Q4') || recommendedModel.model.includes('Small'),
-  'recommended-4b': recommendedModel.model.includes('4B')
-}">
+<div class="model-selector" :class="selectorClass">
   <div class="controls">
     <div class="control-group">
       <label for="ram-select">RAM (GB)</label>
@@ -254,14 +278,7 @@ const isRecommended = computed(() => {
     <strong>Recommended model:</strong>
     <span
       class="model-name"
-      :class="{
-        'recommended-high': recommendedModel.model.includes('bf16'),
-        'recommended-medium': recommendedModel.model.includes('Q8') && !recommendedModel.model.includes('bf16'),
-        'recommended-low': recommendedModel.model.includes('Q6'),
-        'recommended-very-low': recommendedModel.model.includes('Q4') || recommendedModel.model.includes('Small'),
-        'recommended-4b': recommendedModel.model.includes('4B'),
-        'not-recommended': !isRecommended
-      }"
+      :class="modelNameClasses"
       :style="{ backgroundColor: recommendedModel.bg, color: recommendedModel.color }"
     >
       {{ recommendedModel.model }}
@@ -269,7 +286,7 @@ const isRecommended = computed(() => {
   </div>
 </div>
 
-> ⚠️ **“Not recommended” means unreliable narrative output**  
+> **“Not recommended” means unreliable narrative output**
 > If the selector returns “Not recommended,” your system likely lacks the resources to run even the smallest narrative-tuned model effectively. In such cases, stories may suffer from **incoherent plot shifts**, **flat characters**, or **repetitive phrasing**—often worse than drafting manually.
 
 ---
