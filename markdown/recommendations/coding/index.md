@@ -15,112 +15,210 @@ import { ref, computed } from 'vue'
 const ram = ref(16)
 const vram = ref(8)
 
+// Define the available options
 const ramOptions = [16, 32, 64, 128]
 const vramOptions = [0, 4, 6, 8, 12, 16, 24, 32]
 
-const matrix = [
-  ["None", "None", "None", "Qwen3 4B Instruct 2507 BF16 ", "Qwen3 4B Instruct 2507 BF16 ", "Phi-4 Q4", "Devstral Small Q6", "Devstral Small Q8 or Qwen3 Coder 30B A3B Instruct Q6"],
-  ["None", "None", "None", "Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q8", "Qwen3 Coder 30B A3B Instruct Q8"],
-  ["Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q8", "Qwen3 Coder 30B A3B Instruct q8", "Qwen3 Coder 30B A3B Instruct Q8", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16"],
-  ["Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16"]
+// Define your recommendation rules here - much easier to maintain!
+const recommendationRules = [
+  // High VRAM, high RAM - bf16 precision
+  { ramMin: 64, vramMin: 16, model: "Qwen3 Coder 30B A3B Instruct bf16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
+  // High VRAM, medium RAM - bf16 precision
+  { ramMin: 32, vramMin: 16, model: "Qwen3 Coder 30B A3B Instruct bf16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
+  // Medium VRAM, high RAM - Q8 precision
+  { ramMin: 32, vramMin: 8, model: "Qwen3 Coder 30B A3B Instruct Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  // Medium VRAM, medium RAM - Q8 precision
+  { ramMin: 16, vramMin: 8, model: "Qwen3 Coder 30B A3B Instruct Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  // Lower VRAM, higher RAM - Q6 precision
+  { ramMin: 32, vramMin: 6, model: "Qwen3 Coder 30B A3B Instruct Q6", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
+  // Low VRAM, sufficient RAM - Q6 precision
+  { ramMin: 16, vramMin: 6, model: "Qwen3 Coder 30B A3B Instruct Q6", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
+  // Very low VRAM - smaller models
+  { ramMin: 16, vramMin: 4, model: "Phi-4 Q4", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
+  { ramMin: 16, vramMin: 4, model: "Devstral Small Q6", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
+  // Very low VRAM - Q8 models if needed
+  { ramMin: 32, vramMin: 4, model: "Devstral Small Q8 or Qwen3 Coder 30B A3B Instruct Q6", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
+  // Low VRAM - 4B models
+  { ramMin: 16, vramMin: 0, model: "Qwen3 4B Instruct 2507 BF16", color: "var(--vp-c-purple-2)", bg: "var(--vp-c-purple-soft)" },
 ]
 
 const recommendedModel = computed(() => {
-  const ri = ramOptions.indexOf(ram.value)
-  const vi = vramOptions.indexOf(vram.value)
-  if (ri === -1 || vi === -1) return 'Invalid selection'
-  const model = matrix[ri][vi]
-  return model === 'None' || model === 'none' ? 'Not recommended' : model
+  // Find the first rule that matches the current RAM and VRAM
+  const matchingRule = recommendationRules.find(rule => ram.value >= rule.ramMin && vram.value >= rule.vramMin)
+  
+  if (matchingRule) {
+    return {
+      model: matchingRule.model,
+      color: matchingRule.color,
+      bg: matchingRule.bg
+    }
+  }
+  
+  return {
+    model: 'Not recommended',
+    color: 'var(--vp-c-text-3)',
+    bg: 'transparent'
+  }
 })
 
 const isRecommended = computed(() => {
-  return recommendedModel.value !== 'Not recommended'
+  return recommendedModel.value.model !== 'Not recommended'
 })
 </script>
 
 <style scoped>
 .model-selector {
   margin: 2rem 0;
-  padding: 1.25rem;
-  border-radius: 12px;
+  padding: 1.5rem;
+  border-radius: 16px;
   background-color: var(--vp-code-block-bg);
-  border: 1px solid var(--vp-c-divider);
+  border: 2px solid var(--vp-c-border); /* Default border */
   font-size: 0.95rem;
+  transition: border-color 0.3s ease;
+  position: relative;
+  overflow: hidden; /* Ensures background colors stay within bounds */
+}
+
+.model-selector::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--vp-c-brand), var(--vp-c-green));
+  /* Default gradient, will be overridden by JavaScript or specific class if needed */
+}
+
+/* Example: Specific border color based on recommendation */
+.model-selector.recommended-high {
+  border-color: var(--vp-c-green-2);
+}
+.model-selector.recommended-medium {
+  border-color: var(--vp-c-blue-2);
+}
+.model-selector.recommended-low {
+  border-color: var(--vp-c-yellow-2);
 }
 
 .model-selector h3 {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
   font-weight: 600;
+  color: var(--vp-c-text-1);
 }
 
 .controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .control-group {
   display: flex;
   flex-direction: column;
-  min-width: 140px;
+  min-width: 150px;
 }
 
 .control-group label {
   font-weight: 500;
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.5rem;
   color: var(--vp-c-text-1);
+  font-size: 0.9rem;
 }
 
 .control-group select {
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.8rem;
   border: 1px solid var(--vp-c-border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--vp-c-bg);
   color: var(--vp-c-text-1);
   font-size: 0.95rem;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.control-group select:hover {
+  border-color: var(--vp-c-brand-lighter);
 }
 
 .control-group select:focus {
   outline: none;
   border-color: var(--vp-c-brand);
-  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.25);
 }
 
 .result {
-  padding-top: 0.5rem;
+  padding-top: 1rem;
   border-top: 1px solid var(--vp-c-divider);
-  font-size: 1rem;
 }
 
 .result strong {
   display: block;
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
   color: var(--vp-c-text-1);
 }
 
 .result .model-name {
-  padding: 0.375rem 0.625rem;
-  border-radius: 6px;
+  display: inline-block;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
   font-family: var(--vp-font-family-mono);
-  font-size: 0.925em;
+  font-size: 0.95em;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 1px solid transparent; /* Default border */
 }
 
-.result .not-recommended {
+.result .model-name.not-recommended {
   color: var(--vp-c-text-3);
-  background: transparent;
+  background: var(--vp-c-bg-soft);
+  border-color: var(--vp-c-text-3);
   font-style: italic;
 }
 
-.result .recommended {
-  background-color: rgba(66, 133, 244, 0.1);
-  color: var(--vp-c-brand);
+/* Dynamically applied styles based on recommendation level */
+.result .model-name.recommended-high {
+  background-color: var(--vp-c-green-soft);
+  color: var(--vp-c-green-2);
+  border-color: var(--vp-c-green-2);
 }
+
+.result .model-name.recommended-medium {
+  background-color: var(--vp-c-blue-soft);
+  color: var(--vp-c-blue-2);
+  border-color: var(--vp-c-blue-2);
+}
+
+.result .model-name.recommended-low {
+  background-color: var(--vp-c-yellow-soft);
+  color: var(--vp-c-yellow-2);
+  border-color: var(--vp-c-yellow-2);
+}
+
+.result .model-name.recommended-very-low {
+  background-color: var(--vp-c-orange-soft);
+  color: var(--vp-c-orange-2);
+  border-color: var(--vp-c-orange-2);
+}
+
+.result .model-name.recommended-4b {
+  background-color: var(--vp-c-purple-soft);
+  color: var(--vp-c-purple-2);
+  border-color: var(--vp-c-purple-2);
+}
+
 </style>
 
-<div class="model-selector">
+<div class="model-selector" :class="{
+  'recommended-high': recommendedModel.model.includes('bf16'),
+  'recommended-medium': recommendedModel.model.includes('Q8') && !recommendedModel.model.includes('bf16'),
+  'recommended-low': recommendedModel.model.includes('Q6'),
+  'recommended-very-low': recommendedModel.model.includes('Q4') || recommendedModel.model.includes('Small'),
+  'recommended-4b': recommendedModel.model.includes('4B')
+}">
   <div class="controls">
     <div class="control-group">
       <label for="ram-select">RAM (GB)</label>
@@ -137,12 +235,20 @@ const isRecommended = computed(() => {
   </div>
 
   <div class="result">
-    <strong>Recommended model for high-precision coding:</strong>
+    <strong>Recommended model:</strong>
     <span
       class="model-name"
-      :class="isRecommended ? 'recommended' : 'not-recommended'"
+      :class="{
+        'recommended-high': recommendedModel.model.includes('bf16'),
+        'recommended-medium': recommendedModel.model.includes('Q8') && !recommendedModel.model.includes('bf16'),
+        'recommended-low': recommendedModel.model.includes('Q6'),
+        'recommended-very-low': recommendedModel.model.includes('Q4') || recommendedModel.model.includes('Small'),
+        'recommended-4b': recommendedModel.model.includes('4B'),
+        'not-recommended': !isRecommended
+      }"
+      :style="{ backgroundColor: recommendedModel.bg, color: recommendedModel.color }"
     >
-      {{ recommendedModel }}
+      {{ recommendedModel.model }}
     </span>
   </div>
 </div>

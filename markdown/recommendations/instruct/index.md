@@ -8,118 +8,246 @@ Instruct-tuned models are AI assistants trained specifically to understand and f
 
 Use the selector below to find the best **instruct-tuned** model that matches your computer’s capabilities:
 
+
 <script setup>
 import { ref, computed } from 'vue'
 
 const ram = ref(16)
 const vram = ref(8)
 
+// Define the available options
 const ramOptions = [16, 32, 64, 128]
 const vramOptions = [0, 4, 6, 8, 12, 16, 24, 32]
 
-const matrix = [
-  ["none", "qwen3 4b instruct 2507 q4", "qwen3 4b instruct 2507 q4", "qwen3 4b instruct 2507 q8", "qwen3 4b instruct 2507 bf16", "qwen3 4b instruct 2507 bf16", "mistral small q4", "mistral small q8"],
-  ["none", "qwen3 4b instruct 2507 q4", "qwen3 4b instruct 2507 q4", "qwen3 4b instruct 2507 q8", "qwen3 4b instruct 2507 bf16", "qwen3 4b instruct 2507 bf16", "mistral small q4 or qwen3 30b instruct q6", "mistral small q8"],
-  ["qwen3 30b instruct q6", "qwen3 30b instruct q6", "qwen3 30b instruct q6", "qwen3 30b instruct q8", "qwen3 30b instruct q8", "qwen3 30b instruct q8", "mistral small q4 or qwen3 30b instruct q8", "mistral small q8 or qwen3 30b instruct bf16"],
-  ["qwen3 30b instruct q8", "qwen3 30b instruct q8", "qwen3 30b instruct q8", "qwen3 30b instruct bf16", "qwen3 30b instruct bf16", "qwen3 30b instruct bf16", "mistral small q4 or qwen3 30b instruct q8", "mistral small q8 or qwen3 30b instruct bf16"]
+// Define your recommendation rules here - much easier to maintain!
+const recommendationRules = [
+  // High VRAM (32 GB), very high RAM (128 GB) - bf16
+  { ramMin: 128, vramMin: 32, model: "Mistral Small Q8 or Qwen3 30B Instruct BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
+  // High VRAM (24 GB), very high RAM (128 GB) - Q8 or bf16
+  { ramMin: 128, vramMin: 24, model: "Mistral Small Q4 or Qwen3 30B Instruct Q8", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
+  // High VRAM (16–24 GB), very high RAM (128 GB) - BF16
+  { ramMin: 128, vramMin: 16, model: "Qwen3 30B Instruct BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
+  { ramMin: 128, vramMin: 12, model: "Qwen3 30B Instruct BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
+  { ramMin: 128, vramMin: 8, model: "Qwen3 30B Instruct BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
+
+  // High VRAM (32 GB), high RAM (64 GB) - Q8 or BF16
+  { ramMin: 64, vramMin: 32, model: "Mistral Small Q8 or Qwen3 30B Instruct BF16", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  // High VRAM (24 GB), high RAM (64 GB) - Q8
+  { ramMin: 64, vramMin: 24, model: "Mistral Small Q4 or Qwen3 30B Instruct Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  // Medium-high VRAM (16–12 GB), high RAM (64 GB) - Q8
+  { ramMin: 64, vramMin: 16, model: "Qwen3 30B Instruct Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  { ramMin: 64, vramMin: 12, model: "Qwen3 30B Instruct Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  { ramMin: 64, vramMin: 8, model: "Qwen3 30B Instruct Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  // Lower VRAM (6–4 GB), high RAM (64 GB) - Q6
+  { ramMin: 64, vramMin: 6, model: "Qwen3 30B Instruct Q6", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
+  { ramMin: 64, vramMin: 4, model: "Qwen3 30B Instruct Q6", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
+  { ramMin: 64, vramMin: 0, model: "Qwen3 30B Instruct Q6", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
+
+  // High VRAM (32 GB), medium RAM (32 GB) - Q8
+  { ramMin: 32, vramMin: 32, model: "Mistral Small Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  // High VRAM (24 GB), medium RAM (32 GB) - Q6/Q4
+  { ramMin: 32, vramMin: 24, model: "Mistral Small Q4 or Qwen3 30B Instruct Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  // Medium VRAM (16–12 GB), medium RAM (32 GB) - BF16 (4B)
+  { ramMin: 32, vramMin: 16, model: "Qwen3 4B BF16", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  { ramMin: 32, vramMin: 12, model: "Qwen3 4B BF16", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  // Medium VRAM (8 GB), medium RAM (32 GB) - Q8 (4B)
+  { ramMin: 32, vramMin: 8, model: "Qwen3 4B Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  // Lower VRAM (6–4 GB), medium RAM (32 GB) - Q4 (4B)
+  { ramMin: 32, vramMin: 6, model: "Qwen3 4B Q4", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
+  { ramMin: 32, vramMin: 4, model: "Qwen3 4B Q4", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
+
+  // High VRAM (32 GB), low RAM (16 GB) - Q8 (4B)
+  { ramMin: 16, vramMin: 32, model: "Mistral Small Q8", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
+  // High VRAM (24 GB), low RAM (16 GB) - Q4 (4B)
+  { ramMin: 16, vramMin: 24, model: "Mistral Small Q4", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
+  // Medium VRAM (16–12 GB), low RAM (16 GB) - BF16 (4B)
+  { ramMin: 16, vramMin: 16, model: "Qwen3 4B BF16", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
+  { ramMin: 16, vramMin: 12, model: "Qwen3 4B BF16", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
+  // Medium VRAM (8 GB), low RAM (16 GB) - Q8 (4B)
+  { ramMin: 16, vramMin: 8, model: "Qwen3 4B Q8", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
+  // Lower VRAM (6–4 GB), low RAM (16 GB) - Q4 (4B)
+  { ramMin: 16, vramMin: 6, model: "Qwen3 4B Q4", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
+  { ramMin: 16, vramMin: 4, model: "Qwen3 4B Q4", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
+  // in case of "None", just dont put any rules here
 ]
 
 const recommendedModel = computed(() => {
-  const ri = ramOptions.indexOf(ram.value)
-  const vi = vramOptions.indexOf(vram.value)
-  if (ri === -1 || vi === -1) return 'Invalid selection'
-  const model = matrix[ri][vi]
-  return model === 'none' ? 'Not recommended' : model
+  // Find the first rule that matches the current RAM and VRAM
+  const matchingRule = recommendationRules.find(rule => ram.value >= rule.ramMin && vram.value >= rule.vramMin)
+  
+  if (matchingRule) {
+    return {
+      model: matchingRule.model,
+      color: matchingRule.color,
+      bg: matchingRule.bg
+    }
+  }
+  
+  return {
+    model: 'Not recommended',
+    color: 'var(--vp-c-text-3)',
+    bg: 'transparent'
+  }
 })
 
 const isRecommended = computed(() => {
-  return recommendedModel.value !== 'Not recommended'
+  return recommendedModel.value.model !== 'Not recommended'
 })
 </script>
 
 <style scoped>
 .model-selector {
   margin: 2rem 0;
-  padding: 1.25rem;
-  border-radius: 12px;
+  padding: 1.5rem;
+  border-radius: 16px;
   background-color: var(--vp-code-block-bg);
-  border: 1px solid var(--vp-c-divider);
+  border: 2px solid var(--vp-c-border); /* Default border */
   font-size: 0.95rem;
+  transition: border-color 0.3s ease;
+  position: relative;
+  overflow: hidden; /* Ensures background colors stay within bounds */
+}
+
+.model-selector::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--vp-c-brand), var(--vp-c-green));
+  /* Default gradient, will be overridden by JavaScript or specific class if needed */
+}
+
+/* Example: Specific border color based on recommendation */
+.model-selector.recommended-high {
+  border-color: var(--vp-c-green-2);
+}
+.model-selector.recommended-medium {
+  border-color: var(--vp-c-blue-2);
+}
+.model-selector.recommended-low {
+  border-color: var(--vp-c-yellow-2);
 }
 
 .model-selector h3 {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
   font-weight: 600;
+  color: var(--vp-c-text-1);
 }
 
 .controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .control-group {
   display: flex;
   flex-direction: column;
-  min-width: 140px;
+  min-width: 150px;
 }
 
 .control-group label {
   font-weight: 500;
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.5rem;
   color: var(--vp-c-text-1);
+  font-size: 0.9rem;
 }
 
 .control-group select {
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.8rem;
   border: 1px solid var(--vp-c-border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--vp-c-bg);
   color: var(--vp-c-text-1);
   font-size: 0.95rem;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.control-group select:hover {
+  border-color: var(--vp-c-brand-lighter);
 }
 
 .control-group select:focus {
   outline: none;
   border-color: var(--vp-c-brand);
-  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.25);
 }
 
 .result {
-  padding-top: 0.5rem;
+  padding-top: 1rem;
   border-top: 1px solid var(--vp-c-divider);
-  font-size: 1rem;
 }
 
 .result strong {
   display: block;
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
   color: var(--vp-c-text-1);
 }
 
 .result .model-name {
-  padding: 0.375rem 0.625rem;
-  border-radius: 6px;
+  display: inline-block;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
   font-family: var(--vp-font-family-mono);
-  font-size: 0.925em;
+  font-size: 0.95em;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 1px solid transparent; /* Default border */
 }
 
-.result .not-recommended {
+.result .model-name.not-recommended {
   color: var(--vp-c-text-3);
-  background: transparent;
+  background: var(--vp-c-bg-soft);
+  border-color: var(--vp-c-text-3);
   font-style: italic;
 }
 
-.result .recommended {
-  background-color: rgba(66, 133, 244, 0.1);
-  color: var(--vp-c-brand);
+/* Dynamically applied styles based on recommendation level */
+.result .model-name.recommended-high {
+  background-color: var(--vp-c-green-soft);
+  color: var(--vp-c-green-2);
+  border-color: var(--vp-c-green-2);
 }
+
+.result .model-name.recommended-medium {
+  background-color: var(--vp-c-blue-soft);
+  color: var(--vp-c-blue-2);
+  border-color: var(--vp-c-blue-2);
+}
+
+.result .model-name.recommended-low {
+  background-color: var(--vp-c-yellow-soft);
+  color: var(--vp-c-yellow-2);
+  border-color: var(--vp-c-yellow-2);
+}
+
+.result .model-name.recommended-very-low {
+  background-color: var(--vp-c-orange-soft);
+  color: var(--vp-c-orange-2);
+  border-color: var(--vp-c-orange-2);
+}
+
+.result .model-name.recommended-4b {
+  background-color: var(--vp-c-purple-soft);
+  color: var(--vp-c-purple-2);
+  border-color: var(--vp-c-purple-2);
+}
+
 </style>
 
-<div class="model-selector">
+<div class="model-selector" :class="{
+  'recommended-high': recommendedModel.model.includes('bf16'),
+  'recommended-medium': recommendedModel.model.includes('Q8') && !recommendedModel.model.includes('bf16'),
+  'recommended-low': recommendedModel.model.includes('Q6'),
+  'recommended-very-low': recommendedModel.model.includes('Q4') || recommendedModel.model.includes('Small'),
+  'recommended-4b': recommendedModel.model.includes('4B')
+}">
   <div class="controls">
     <div class="control-group">
       <label for="ram-select">RAM (GB)</label>
@@ -136,12 +264,20 @@ const isRecommended = computed(() => {
   </div>
 
   <div class="result">
-    <strong>Recommended instruct model:</strong>
+    <strong>Recommended model:</strong>
     <span
       class="model-name"
-      :class="isRecommended ? 'recommended' : 'not-recommended'"
+      :class="{
+        'recommended-high': recommendedModel.model.includes('bf16'),
+        'recommended-medium': recommendedModel.model.includes('Q8') && !recommendedModel.model.includes('bf16'),
+        'recommended-low': recommendedModel.model.includes('Q6'),
+        'recommended-very-low': recommendedModel.model.includes('Q4') || recommendedModel.model.includes('Small'),
+        'recommended-4b': recommendedModel.model.includes('4B'),
+        'not-recommended': !isRecommended
+      }"
+      :style="{ backgroundColor: recommendedModel.bg, color: recommendedModel.color }"
     >
-      {{ recommendedModel }}
+      {{ recommendedModel.model }}
     </span>
   </div>
 </div>
