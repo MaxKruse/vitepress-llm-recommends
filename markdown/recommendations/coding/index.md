@@ -19,10 +19,10 @@ const ramOptions = [16, 32, 64, 128]
 const vramOptions = [0, 4, 6, 8, 12, 16, 24, 32]
 
 const matrix = [
-  ["None", "none", "none", "qwen3 4b instruct 2507 bf16 ", "qwen3 4b instruct 2507 bf16 ", "phi-4 q4", "devstral small q6", "devstral small q8 or qwen3 coder 30b q6"],
-  ["None", "none", "none", "qwen3 coder 30b q6", "qwen3 coder 30b q6", "qwen3 coder 30b q6", "qwen3 coder 30b q8", "qwen3 coder 30b q8"],
-  ["qwen3 coder 30b q6", "qwen3 coder 30b q6", "qwen3 coder 30b q6", "qwen3 coder 30b q8", "qwen3 coder 30b q8", "qwen3 coder 30b q8", "qwen3 coder 30b bf16", "qwen3 coder 30b bf16"],
-  ["qwen3 coder 30b bf16", "qwen3 coder 30b bf16", "qwen3 coder 30b bf16", "qwen3 coder 30b bf16", "qwen3 coder 30b bf16", "qwen3 coder 30b bf16", "qwen3 coder 30b bf16", "qwen3 coder 30b bf16"]
+  ["None", "None", "None", "Qwen3 4B Instruct 2507 BF16 ", "Qwen3 4B Instruct 2507 BF16 ", "Phi-4 Q4", "Devstral Small Q6", "Devstral Small Q8 or Qwen3 Coder 30B A3B Instruct Q6"],
+  ["None", "None", "None", "Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q8", "Qwen3 Coder 30B A3B Instruct Q8"],
+  ["Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q6", "Qwen3 Coder 30B A3B Instruct Q8", "Qwen3 Coder 30B A3B Instruct q8", "Qwen3 Coder 30B A3B Instruct Q8", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16"],
+  ["Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16", "Qwen3 Coder 30B A3B Instruct bf16"]
 ]
 
 const recommendedModel = computed(() => {
