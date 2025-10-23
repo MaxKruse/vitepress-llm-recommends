@@ -68,5 +68,6 @@ export default defineConfig({
   },
 
   srcDir: "markdown",
-  outDir: ".vitepress/dist",
+  outDir: "docs",
+  base: "/vitepress-llm-recommends/",
 });

@@ -12,7 +12,7 @@ Modern AI systems leverage different architectural approaches to balance perform
 - Consistent computational requirements
 - Simpler training and deployment
 
-[Learn more about Dense Models →](./dense)
+[Learn more about Dense Models →](./dense/)
 
 ## Mixture-of-Experts (MoE)
 **Sparse, conditional architectures** that activate specialized sub-networks ("experts") based on input.
@@ -20,7 +20,7 @@ Modern AI systems leverage different architectural approaches to balance perform
 - Dynamic computational scaling
 - Specialized knowledge routing
 
-[Learn more about Mixture-of-Experts →](./moe)
+[Learn more about Mixture-of-Experts →](./mixture-of-experts/)
 
 ---
 

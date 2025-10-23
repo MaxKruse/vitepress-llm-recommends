@@ -13,6 +13,8 @@
   "scripts": {
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
-    "docs:preview": "vitepress preview"
+    "docs:preview": "vitepress preview",
+    "build:docs": "bun run docs:build",
+    "deploy:gh-pages": "bun run docs:build && bunx gh-pages -d docs"
   }
 }
