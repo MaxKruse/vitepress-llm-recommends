@@ -22,40 +22,22 @@ const ramOptions = [16, 32, 64, 128]
 const vramOptions = [0, 4, 6, 8, 12, 16, 24, 32]
 
 const recommendationRules = [
-  // Very high RAM (128 GB)
-  { ramMin: 128, vramMin: 32, model: "Qwen3-30B-Thinking BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
-  { ramMin: 128, vramMin: 24, model: "Qwen3-30B-Thinking BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
-  { ramMin: 128, vramMin: 16, model: "Qwen3-30B-Thinking BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
-  { ramMin: 128, vramMin: 12, model: "Qwen3-30B-Thinking BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
-  { ramMin: 128, vramMin: 8, model: "Qwen3-30B-Thinking BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
-  { ramMin: 128, vramMin: 6, model: "Qwen3-30B-Thinking BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
-  { ramMin: 128, vramMin: 4, model: "Qwen3-30B-Thinking BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
-  { ramMin: 128, vramMin: 0, model: "Qwen3-30B-Thinking BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
+  { ramMin: 128, vramMin: 0, model: "Qwen3-30B-Thinking 2507 BF16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
 
   // High RAM (64 GB)
   { ramMin: 64, vramMin: 32, model: "Qwen3-30B-Thinking BF16", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 64, vramMin: 24, model: "Qwen3-30B-Thinking Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 64, vramMin: 16, model: "Qwen3-30B-Thinking Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
   { ramMin: 64, vramMin: 12, model: "Qwen3-30B-Thinking Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 64, vramMin: 8, model: "Qwen3-30B-Thinking Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 64, vramMin: 6, model: "Qwen3-30B-Thinking Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 64, vramMin: 4, model: "Qwen3-30B-Thinking Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
   { ramMin: 64, vramMin: 0, model: "Qwen3-30B-Thinking Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
 
   // Medium RAM (32 GB)
-  { ramMin: 32, vramMin: 32, model: "Qwen3-4B-Thinking BF16 or Qwen3-30B-Thinking Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 32, vramMin: 24, model: "Qwen3-4B-Thinking BF16", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 32, vramMin: 16, model: "Qwen3-4B-Thinking BF16", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 32, vramMin: 12, model: "Qwen3-4B-Thinking BF16", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 32, vramMin: 8, model: "Qwen3-4B-Thinking Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 32, vramMin: 6, model: "Qwen3-4B-Thinking Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 32, vramMin: 4, model: "Qwen3-4B-Thinking Q4", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  { ramMin: 32, vramMin: 0, model: "Qwen3-4B-Thinking Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  { ramMin: 32, vramMin: 32, model: "Qwen3-30B-Thinking 2507 BF16", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  { ramMin: 32, vramMin: 24, model: "Qwen3-30B-Thinking 2507 Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  { ramMin: 32, vramMin: 12, model: "Qwen3-4B-Thinking 2507 BF16", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  { ramMin: 32, vramMin: 8, model: "Qwen3-4B-Thinking 2507 Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
+  { ramMin: 32, vramMin: 0, model: "Qwen3-4B-Thinking 2507 Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
 
   // Low RAM (16 GB)
   { ramMin: 16, vramMin: 32, model: "Qwen3-4B-Thinking BF16 or Qwen3-30B-Thinking Q6", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
-  { ramMin: 16, vramMin: 24, model: "Qwen3-4B-Thinking BF16", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
-  { ramMin: 16, vramMin: 16, model: "Qwen3-4B-Thinking BF16", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
   { ramMin: 16, vramMin: 12, model: "Qwen3-4B-Thinking BF16", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
   { ramMin: 16, vramMin: 8, model: "Qwen3-4B-Thinking Q8", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
   { ramMin: 16, vramMin: 6, model: "Qwen3-4B-Thinking Q6", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },

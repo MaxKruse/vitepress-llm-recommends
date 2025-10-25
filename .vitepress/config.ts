@@ -58,12 +58,15 @@ export default defineConfig({
 
     socialLinks: [
       // Add if you have a GitHub, X, etc.
-      // { icon: 'github', link: 'https://github.com/your-repo' }
+      {
+        icon: "github",
+        link: "https://github.com/MaxKruse/vitepress-llm-recommends/",
+      },
     ],
 
     footer: {
       message: "Released under the MIT License.",
-      copyright: "Copyright © 2025 Your Name or Org",
+      copyright: "Copyright © 2025 Maximilian Kruse",
     },
   },
 
