@@ -20,34 +20,34 @@ const ramOptions = [16, 32, 64, 128]
 const vramOptions = [0, 4, 6, 8, 12, 16, 24, 32]
 
 const recommendationRules = [
-  // Very high RAM (128 GB)
+  
   { ramMin: 128, vramMin: 32, model: "GPT OSS 120B or Gemma 3 27B Q8", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
   { ramMin: 128, vramMin: 16, model: "GPT OSS 120B or Gemma 3 27B Q4", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
   { ramMin: 128, vramMin: 12, model: "GPT OSS 120B or Gemma 3 12B Q6", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
   { ramMin: 128, vramMin: 0, model: "GPT OSS 120B", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
 
-  // High RAM (64 GB)
+
   { ramMin: 64, vramMin: 32, model: "GPT OSS 20B or Gemma 3 27B Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
   { ramMin: 64, vramMin: 24, model: "GPT OSS 20B or Gemma 3 27B Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
   { ramMin: 64, vramMin: 12, model: "GPT OSS 20B or Gemma 3 12B Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
   { ramMin: 64, vramMin: 0, model: "GPT OSS 20B", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
 
-  // Medium RAM (32 GB)
+
   { ramMin: 32, vramMin: 32, model: "GPT OSS 20B or Gemma 3 27B Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
   { ramMin: 32, vramMin: 24, model: "GPT OSS 20B or Gemma 3 27B Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
   { ramMin: 32, vramMin: 16, model: "GPT OSS 20B or Gemma 3 12B Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
   { ramMin: 32, vramMin: 12, model: "GPT OSS 20B or Gemma 3 12B Q6", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
   { ramMin: 32, vramMin: 8, model: "GPT OSS 20B or Gemma 3 12B Q4", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
   { ramMin: 32, vramMin: 6, model: "GPT OSS 20B", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
-  // vramMin: 4 and 0 → "none" → omitted
+  
 
-  // Low RAM (16 GB)
+
   { ramMin: 16, vramMin: 32, model: "GPT OSS 20B or Gemma 3 27B Q8", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
   { ramMin: 16, vramMin: 24, model: "GPT OSS 20B or Gemma 3 27B Q6", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
   { ramMin: 16, vramMin: 16, model: "GPT OSS 20B or Gemma 3 12B Q8", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
   { ramMin: 16, vramMin: 12, model: "GPT OSS 20B or Gemma 3 12B Q6", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
   { ramMin: 16, vramMin: 8, model: "Gemma 3 12B Q4", color: "var(--vp-c-orange-2)", bg: "var(--vp-c-orange-soft)" },
-  // vramMin: 6, 4, 0 → "none" → omitted
+  
 ];
 
 const recommendedModel = computed(() => {

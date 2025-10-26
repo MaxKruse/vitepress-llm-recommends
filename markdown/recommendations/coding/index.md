@@ -21,13 +21,12 @@ const vramOptions = [0, 4, 6, 8, 12, 16, 24, 32]
 
 // Define your recommendation rules here - much easier to maintain!
 const recommendationRules = [
-  // High VRAM, high RAM - bf16 precision
   { ramMin: 64, vramMin: 16, model: "Qwen3 Coder 30B A3B Instruct bf16", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
-  // High VRAM, medium RAM - bf16 precision
+  
   { ramMin: 32, vramMin: 16, model: "Qwen3 Coder 30B A3B Instruct Q8", color: "var(--vp-c-green-2)", bg: "var(--vp-c-green-soft)" },
-  // Lower VRAM, higher RAM - Q6 precision
+  
   { ramMin: 32, vramMin: 6, model: "Qwen3 Coder 30B A3B Instruct Q6", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
-  // Low VRAM - 4B models
+  
   { ramMin: 16, vramMin: 4, model: "Qwen3 4B Instruct 2507 BF16", color: "var(--vp-c-purple-2)", bg: "var(--vp-c-purple-soft)" },
 ]
 
