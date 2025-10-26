@@ -6,8 +6,8 @@ const props = defineProps({
     type: Array,
     default: () => [
       { ramMin: 64, vramMin: 16, models: [{"Qwen3 Coder 30B A3B Instruct": { parameters: 30, quantization: 'BF16' }}], usefulness: 1.0},
-      { ramMin: 32, vramMin: 16, models: [{"Qwen3 Coder 30B A3B Instruct": { parameters: 30, quantization: 'Q8_0' }}], usefulness: 0.7},
-      { ramMin: 32, vramMin: 6, models: [{"Qwen3 Coder 30B A3B Instruct": { parameters: 30, quantization: 'Q6_K_M' }}], usefulness: 0.5},
+      { ramMin: 32, vramMin: 16, models: [{"Qwen3 Coder 30B A3B Instruct": { parameters: 30, quantization: 'Q8_K_XL' }}], usefulness: 0.7},
+      { ramMin: 32, vramMin: 6, models: [{"Qwen3 Coder 30B A3B Instruct": { parameters: 30, quantization: 'Q6_K_XL' }}], usefulness: 0.5},
       { ramMin: 16, vramMin: 4, models: [{"Qwen3 4B Instruct 2507": { parameters: 4, quantization: 'F16' }}], usefulness: 0.3},
     ]
   },
@@ -34,28 +34,65 @@ const recommendedModel = computed(() => {
   const matchingRule = recommendationRules.value.find(rule => ram.value >= rule.ramMin && vram.value >= rule.vramMin)
   
   if (matchingRule) {
-    // Extract the model name and details from the models array
-    const modelEntry = matchingRule.models[0]
-    const modelName = Object.keys(modelEntry)[0]
-    const modelDetails = modelEntry[modelName]
-    
+    // Build a normalized list of model entries: { name, details }
+    const modelEntries = matchingRule.models.map(m => {
+      const name = Object.keys(m)[0]
+      const details = m[name]
+      return { name, details }
+    })
+
+    // Helper to format a model entry exactly as "{name} {parameters}B ({quantization})"
+    // If parameters or quantization are missing, fall back to "{name} (unknown)"
+    function formatModelEntry(name, details) {
+      const hasParams = details && typeof details.parameters === 'number'
+      const quant = details?.quantization
+      if (!hasParams || !quant) return `${name} (unknown)`
+      return `${name} ${details.parameters}B (${quant})`
+    }
+
+    // Choose the single model that yields the largest file-size (worst-case) for conservative calculations.
+    // Use addContext = true when computing file-size for selection as requested.
+    let chosen = modelEntries[0] || { name: 'Unknown', details: null }
+    let maxSize = -Infinity
+    for (const e of modelEntries) {
+      const params = e.details?.parameters ?? 0
+      const quant = e.details?.quantization ?? ''
+      const size = calculateFileSize(params, quant, true)
+      if (size > maxSize) {
+        maxSize = size
+        chosen = e
+      }
+    }
+
     // Calculate border color based on usefulness
     const borderColor = calculateBorderColor(matchingRule.usefulness)
     
+    // Build plausibleModels: formatted strings for every model in the matching rule EXCLUDING the chosenModel
+    const plausibleModels = modelEntries
+      .filter(e => e.name !== chosen.name)
+      .map(e => formatModelEntry(e.name, e.details))
+
     return {
-      model: modelName,
-      details: modelDetails,
+      // Keep 'model' and 'details' pointing to the chosen (largest-by-filesize) model
+      model: chosen.name,
+      // Provide a formatted display string for the primary model for template use
+      formattedModel: formatModelEntry(chosen.name, chosen.details),
+      // plausibleModels is an array of formatted strings (other models only)
+      plausibleModels,
+      details: chosen.details,
       usefulness: matchingRule.usefulness,
       borderColor,
       // Keep text and background readable
       color: 'var(--vp-c-text-1)', // High contrast text
       bg: 'var(--vp-c-bg-soft)',   // Soft background that works with theme
-      hasGlow: matchingRule.usefulness === 1.0 ||matchingRule.usefulness === 0.0 // Add glow for 100% usefulness
+      hasGlow: matchingRule.usefulness === 1.0 || matchingRule.usefulness === 0.0 // Add glow for 100% usefulness
     }
   }
   
   return {
     model: 'Not recommended',
+    formattedModel: 'Not recommended',
+    plausibleModels: [],
     details: null,
     usefulness: 0,
     borderColor: 'var(--vp-c-red-2)',
@@ -125,6 +162,7 @@ function getQuantizationLevel(quantization) {
   if (quantization.includes('Q6')) return 6
   if (quantization.includes('Q5')) return 5
   if (quantization.includes('Q4')) return 4
+  if (quantization.includes('MXFP4')) return 4
   if (quantization.includes('Q3')) return 3
   if (quantization.includes('Q2')) return 2
   if (quantization.includes('Q1')) return 1
@@ -629,10 +667,16 @@ const contextSizeIndex = computed({
                recommendedModel.hasGlow && recommendedModel.usefulness === 0 ? $style.modelNameNoMatch : '']"
       :style="{ backgroundColor: recommendedModel.bg, color: recommendedModel.color, borderColor: recommendedModel.borderColor }"
     >
-      {{ recommendedModel.model }}
+      {{ recommendedModel.formattedModel || recommendedModel.model }}
     </span>
+    <div v-if="recommendedModel.plausibleModels && recommendedModel.plausibleModels.length > 0" :class="$style.details">
+      <small>Also considered: {{ recommendedModel.plausibleModels.join(', ') }}</small>
+    </div>
     <div v-if="recommendedModel.details" :class="$style.details">
-      <small>Parameters: {{ recommendedModel.details.parameters }}B | Quantization: {{ recommendedModel.details.quantization.toUpperCase() }}</small>
+      <small>
+        Parameters: {{ recommendedModel.details.parameters ? recommendedModel.details.parameters + 'B' : '(unknown)' }} |
+        Quantization: {{ recommendedModel.details.quantization ? recommendedModel.details.quantization.toUpperCase() : '(unknown)' }}
+      </small>
     </div>
   </div>
 
