@@ -33,9 +33,9 @@ const recommendationRules = [
   { ramMin: 64, vramMin: 24, model: "Mistral Small Q6 or Qwen3 30B Instruct 2507 Q8", color: "var(--vp-c-blue-2)", bg: "var(--vp-c-blue-soft)" },
   
   // Medium-high VRAM (16–12 GB), high RAM (64 GB) - Q8
-  { ramMin: 64, vramMin: 16, model: "Qwen3 30B Instruct Q8", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
-  { ramMin: 64, vramMin: 12, model: "Qwen3 30B Instruct Q8", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
-  { ramMin: 64, vramMin: 8, model: "Qwen3 30B Instruct Q8", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
+  { ramMin: 64, vramMin: 16, model: "Qwen3 30B Instruct 2507 Q8", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
+  { ramMin: 64, vramMin: 12, model: "Qwen3 30B Instruct 2507 Q8", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
+  { ramMin: 64, vramMin: 8, model: "Qwen3 30B Instruct 2507 Q8", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
   // Lower VRAM (6–4 GB), high RAM (64 GB) - Q6
   { ramMin: 64, vramMin: 6, model: "Qwen3 30B Instruct 2507 Q8", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
   { ramMin: 64, vramMin: 4, model: "Qwen3 30B Instruct 2507 Q8", color: "var(--vp-c-yellow-2)", bg: "var(--vp-c-yellow-soft)" },
