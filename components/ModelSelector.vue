@@ -145,14 +145,20 @@ const isRecommended = computed(() => {
   return recommendedModel.value.model !== 'Not recommended'
 })
 
+// Fixed selectorClass computed property - now properly maps usefulness to CSS classes
 const selectorClass = computed(() => {
-  if (!isRecommended.value) return { 'not-recommended': true }
-  return {}
+  if (!isRecommended.value) return { 'notRecommended': true }
+  if (recommendedModel.value.usefulness === 1.0) return { 'recommendedSuccess': true }
+  if (recommendedModel.value.usefulness >= 0.5) return { 'recommendedCaution': true }
+  return { 'recommendedWarning': true }
 })
 
+// Fixed modelNameClasses computed property
 const modelNameClasses = computed(() => {
-  if (!isRecommended.value) return { 'not-recommended': true }
-  return {}
+  if (!isRecommended.value) return { 'notRecommended': true }
+  if (recommendedModel.value.usefulness === 1.0) return { 'recommendedSuccess': true }
+  if (recommendedModel.value.usefulness >= 0.5) return { 'recommendedCaution': true }
+  return { 'recommendedWarning': true }
 })
 
 // Calculate quantization level from quantization string
@@ -205,73 +211,136 @@ function calculateWindowsOverhead(ramSize) {
   return 0
 }
 
-// Memory bar calculations
+// Fixed: Added missing computed property for VRAM overhead
+const vramWindowsOverhead = computed(() => {
+  return 1
+})
+
+// Memory bar & allocation calculations (new)
 const ramWindowsOverhead = computed(() => calculateWindowsOverhead(ram.value))
-const ramModelSize = computed(() => {
+
+// Core computed sizes (model weights only, context overhead, windows overhead)
+const modelSizeGB = computed(() => {
   if (!recommendedModel.value.details) return 0
   return calculateFileSize(recommendedModel.value.details.parameters, recommendedModel.value.details.quantization, false)
 })
+const contextSizeGB = computed(() => calculateContextOverhead()) // Fixed: Always calculate based on current context size
+const vramWindowsOverheadGB = computed(() => vramWindowsOverhead.value)
+const ramWindowsOverheadGB = computed(() => ramWindowsOverhead.value)
 
-// Calculate context overhead separately for display
-const ramContextOverhead = computed(() => {
-  if (!recommendedModel.value.details) return 0
-  return calculateContextOverhead()
-})
+// --- NEW: Chunk-based allocation logic ---
+const chunkSizeGB = computed(() => {
+  if (modelSizeGB.value === 0) return 0;
+  return modelSizeGB.value / 24.0; // middleground for most models
+});
 
-const ramLeftover = computed(() => {
-  const used = ramWindowsOverhead.value + ramModelSize.value
-  return Math.max(0, ram.value - used)
-})
-
-const vramWindowsOverhead = computed(() => 1) // Fixed 1GB VRAM overhead
-const vramModelSize = computed(() => {
-  if (!recommendedModel.value.details) return 0
-  return calculateFileSize(recommendedModel.value.details.parameters, recommendedModel.value.details.quantization)
-})
-
-// Calculate VRAM context overhead separately for display
-const vramContextOverhead = computed(() => {
-  if (!recommendedModel.value.details) return 0
-  return calculateContextOverhead()
-})
-
-const vramLeftover = computed(() => {
-  const used = vramWindowsOverhead.value + vramModelSize.value
-  return Math.max(0, vram.value - used)
-})
-
-// Memory bar styles - updated to show context overhead separately
-const ramBarStyle = computed(() => {
-  const total = ram.value
-  const winPercent = (ramWindowsOverhead.value / total) * 100
-  const modelPercent = (ramModelSize.value / total) * 100
-  const leftoverPercent = (ramLeftover.value / total) * 100
-  
-  return {
-    background: `linear-gradient(
-      to right,
-      var(--vp-c-blue-2) ${winPercent}%,
-      var(--vp-c-orange-2) ${winPercent}% ${winPercent + modelPercent}%,
-      var(--vp-c-gray-3) ${winPercent + modelPercent}% ${winPercent + modelPercent + leftoverPercent}%
-    )`,
-    height: '20px',
-    borderRadius: '4px',
-    width: '100%'
+// --- Fixed Context Allocation Logic ---
+// Determine where context will be placed
+const contextInVRAM = computed(() => {
+  if (!recommendedModel.value.details) return 0;
+  // Check if VRAM can fit both Windows overhead and the full context
+  if (vram.value >= vramWindowsOverheadGB.value + contextSizeGB.value) {
+    return contextSizeGB.value; // Place context in VRAM
   }
+  return 0; // Context cannot fit in VRAM
 })
 
+const contextInRAM = computed(() => {
+  if (!recommendedModel.value.details) return 0;
+  // Context goes to RAM only if it couldn't fit in VRAM
+  if (contextInVRAM.value === 0) {
+    return contextSizeGB.value;
+  }
+  return 0;
+})
+
+// VRAM usable after windows overhead and context (if placed there)
+const vramUsable = computed(() => Math.max(0, vram.value - vramWindowsOverheadGB.value - contextInVRAM.value))
+
+// RAM usable after windows overhead and context (if placed there)
+const ramUsable = computed(() => Math.max(0, ram.value - ramWindowsOverheadGB.value - contextInRAM.value))
+
+// Calculate how many chunks can fit in each device
+const vramChunks = computed(() => Math.floor(vramUsable.value / chunkSizeGB.value));
+const ramChunks = computed(() => Math.floor(ramUsable.value / chunkSizeGB.value));
+const totalChunksNeeded = computed(() => Math.ceil(modelSizeGB.value / chunkSizeGB.value));
+
+// Allocate chunks based on available space
+const modelInVRAM = computed(() => {
+  if (totalChunksNeeded.value === 0) return 0;
+  const chunksToPlace = Math.min(vramChunks.value, totalChunksNeeded.value);
+  return chunksToPlace * chunkSizeGB.value;
+});
+
+const modelInRAM = computed(() => {
+  if (totalChunksNeeded.value === 0) return 0;
+  const chunksPlacedInVRAM = modelInVRAM.value / chunkSizeGB.value;
+  const remainingChunks = totalChunksNeeded.value - chunksPlacedInVRAM;
+  const chunksToPlaceInRAM = Math.min(ramChunks.value, remainingChunks);
+  return chunksToPlaceInRAM * chunkSizeGB.value;
+});
+
+// --- End NEW: Chunk-based allocation logic ---
+
+// Amount of context allocated to RAM (GB). This is now just the value of contextInRAM.
+const ramContextOverhead = computed(() => contextInRAM.value)
+
+// Totals used
+const vramUsedTotal = computed(() => vramWindowsOverheadGB.value + contextInVRAM.value + modelInVRAM.value)
+const ramUsedTotal = computed(() => ramWindowsOverheadGB.value + contextInRAM.value + modelInRAM.value)
+
+// Leftovers (clamped to zero)
+const vramLeftover = computed(() => Math.max(0, vram.value - vramUsedTotal.value))
+const ramLeftover = computed(() => Math.max(0, ram.value - ramUsedTotal.value))
+
+// Overflow booleans for warnings
+const vramOverflow = computed(() => vramUsedTotal.value > vram.value)
+const ramOverflow = computed(() => ramUsedTotal.value > ram.value)
+
+// Human-friendly displays (rounded) — ALWAYS return a string and guard against undefined
+const modelInVRAMDisplay = computed(() => {
+  const val = modelInVRAM ? modelInVRAM.value : 0
+  return (Number(val) || 0).toFixed(2)
+})
+const modelInRAMDisplay = computed(() => {
+  const val = modelInRAM ? modelInRAM.value : 0
+  return (Number(val) || 0).toFixed(2)
+})
+const contextInVRAMDisplay = computed(() => {
+  const val = contextInVRAM ? contextInVRAM.value : 0
+  return (Number(val) || 0).toFixed(2)
+})
+const contextInRAMDisplay = computed(() => {
+  const val = contextInRAM ? contextInRAM.value : 0
+  return (Number(val) || 0).toFixed(2)
+})
+const vramUsedDisplay = computed(() => {
+  const val = vramUsedTotal ? vramUsedTotal.value : 0
+  return (Number(val) || 0).toFixed(2)
+})
+const ramUsedDisplay = computed(() => {
+  const val = ramUsedTotal ? ramUsedTotal.value : 0
+  return (Number(val) || 0).toFixed(2)
+})
+
+
+// Memory bar styles showing slices:
+// VRAM: windows overhead -> contextInVRAM -> modelInVRAM -> leftover
 const vramBarStyle = computed(() => {
-  const total = vram.value
-  const winPercent = (vramWindowsOverhead.value / total) * 100
-  const modelPercent = (vramModelSize.value / total) * 100
-  const leftoverPercent = (vramLeftover.value / total) * 100
-  
+  const total = vram.value || 1 // avoid divide by zero
+  const winPct = (vramWindowsOverheadGB.value / total) * 100
+  const ctxPct = (contextInVRAM.value / total) * 100
+  const mVRAMPct = (modelInVRAM.value / total) * 100
+  const p1 = winPct
+  const p2 = winPct + ctxPct
+  const p3 = p2 + mVRAMPct
   return {
     background: `linear-gradient(
       to right,
-      var(--vp-c-blue-2) ${winPercent}%,
-      var(--vp-c-orange-2) ${winPercent}% ${winPercent + modelPercent}%,
-      var(--vp-c-gray-3) ${winPercent + modelPercent}% ${winPercent + modelPercent + leftoverPercent}%
+      var(--vp-c-blue-2) 0% ${p1}%,
+      var(--vp-c-purple-2) ${p1}% ${p2}%,
+      var(--vp-c-orange-2) ${p2}% ${p3}%,
+      var(--vp-c-gray-3) ${p3}% 100%
     )`,
     height: '20px',
     borderRadius: '4px',
@@ -279,12 +348,39 @@ const vramBarStyle = computed(() => {
   }
 })
 
-// Legend for memory bars - updated to include context overhead
+// RAM: windows overhead -> contextInRAM -> modelInRAM -> leftover
+const ramBarStyle = computed(() => {
+  const total = ram.value || 1
+  const winPct = (ramWindowsOverheadGB.value / total) * 100
+  const ctxPct = (contextInRAM.value / total) * 100
+  const mRAMPct = (modelInRAM.value / total) * 100
+  const p1 = winPct
+  const p2 = winPct + ctxPct
+  const p3 = p2 + mRAMPct
+  return {
+    background: `linear-gradient(
+      to right,
+      var(--vp-c-blue-2) 0% ${p1}%,
+      var(--vp-c-purple-2) ${p1}% ${p2}%,
+      var(--vp-c-orange-2) ${p2}% ${p3}%,
+      var(--vp-c-gray-3) ${p3}% 100%
+    )`,
+    height: '20px',
+    borderRadius: '4px',
+    width: '100%'
+  }
+})
+
+// Legend for memory bars - now includes context/model locations
 const legendItems = [
   { label: 'Windows Overhead', color: 'var(--vp-c-blue-2)' },
-  { label: 'Model Size', color: 'var(--vp-c-orange-2)' },
+  { label: 'Context (in VRAM)', color: 'var(--vp-c-purple-2)' },
+  { label: 'Context (in RAM)', color: 'var(--vp-c-purple-soft)' },
+  { label: 'Model (in VRAM)', color: 'var(--vp-c-orange-2)' },
+  { label: 'Model (in RAM)', color: 'var(--vp-c-orange-soft)' },
   { label: 'Available', color: 'var(--vp-c-gray-3)' }
 ]
+
 // Context size options for the slider
 const contextSizeOptions = computed(() => {
   const multipliers = [1, 2, 4, 8, 12, 16, 22, 28, 32];
@@ -340,7 +436,7 @@ const contextSizeIndex = computed({
   /* Default gradient, will be overridden by JavaScript or specific class if needed */
 }
 
-/* Example: Specific border color based on recommendation */
+/* Fixed: Added proper CSS classes that match computed properties */
 .modelSelectorRecommendedSuccess {
   border-color: var(--vp-c-green-2);
 }
@@ -350,8 +446,8 @@ const contextSizeIndex = computed({
 .modelSelectorRecommendedWarning {
   border-color: var(--vp-c-orange-2);
 }
-.modelSelectorRecommended4b {
-  border-color: var(--vp-c-purple-2);
+.modelSelectorNotRecommended {
+  border-color: var(--vp-c-red-2);
 }
 
 .modelSelectorGlow {
@@ -611,16 +707,23 @@ const contextSizeIndex = computed({
 .contextDetails strong {
   color: var(--vp-c-text-1);
 }
+
+/* Red warning box shown when RAM or VRAM math exceeds totals */
+.memoryWarningBox {
+  border: 2px solid var(--vp-c-red-2);
+  background: rgba(239, 68, 68, 0.04); /* subtle red tint */
+  padding: 0.5rem;
+  border-radius: 8px;
+}
 </style>
 
 <template>
 <div 
   :class="[$style.modelSelector, 
-           selectorClass['recommendedSuccess'] ? $style.modelSelectorRecommendedSuccess : '',
-           selectorClass['recommendedCaution'] ? $style.modelSelectorRecommendedCaution : '',
-           selectorClass['recommendedWarning'] ? $style.modelSelectorRecommendedWarning : '',
-           selectorClass['recommended4b'] ? $style.modelSelectorRecommended4b : '',
-           selectorClass['not-recommended'] ? $style.modelSelectorNotRecommended : '',
+           selectorClass.recommendedSuccess ? $style.modelSelectorRecommendedSuccess : '',
+           selectorClass.recommendedCaution ? $style.modelSelectorRecommendedCaution : '',
+           selectorClass.recommendedWarning ? $style.modelSelectorRecommendedWarning : '',
+           selectorClass.notRecommended ? $style.modelSelectorNotRecommended : '',
            recommendedModel.hasGlow && recommendedModel.usefulness === 1.0 ? $style.modelSelectorGlow : '',
            recommendedModel.hasGlow && recommendedModel.usefulness === 0 ? $style.modelSelectorNoMatch : '']"
   :style="{ borderColor: recommendedModel.borderColor }">
@@ -658,11 +761,10 @@ const contextSizeIndex = computed({
     <strong :class="$style.resultStrong">Recommended model:</strong>
     <span
       :class="[$style.modelName,
-               modelNameClasses['recommendedSuccess'] ? $style.modelNameRecommendedSuccess : '',
-               modelNameClasses['recommendedCaution'] ? $style.modelNameRecommendedCaution : '',
-               modelNameClasses['recommendedWarning'] ? $style.modelNameRecommendedWarning : '',
-               modelNameClasses['recommended4b'] ? $style.modelNameRecommended4b : '',
-               modelNameClasses['not-recommended'] ? $style.modelNameNotRecommended : '',
+               modelNameClasses.recommendedSuccess ? $style.modelNameRecommendedSuccess : '',
+               modelNameClasses.recommendedCaution ? $style.modelNameRecommendedCaution : '',
+               modelNameClasses.recommendedWarning ? $style.modelNameRecommendedWarning : '',
+               modelNameClasses.notRecommended ? $style.modelNameNotRecommended : '',
                recommendedModel.hasGlow && recommendedModel.usefulness === 1.0 ? $style.modelNameGlow : '',
                recommendedModel.hasGlow && recommendedModel.usefulness === 0 ? $style.modelNameNoMatch : '']"
       :style="{ backgroundColor: recommendedModel.bg, color: recommendedModel.color, borderColor: recommendedModel.borderColor }"
@@ -682,33 +784,38 @@ const contextSizeIndex = computed({
 
   <!-- Context overhead details -->
   <div v-if="recommendedModel.details" :class="$style.contextDetails">
-    <strong>Context Overhead:</strong> {{ ramContextOverhead.toFixed(2) }}GB (based on {{ contextSize.toLocaleString() }} token context)
+    <strong>Context Overhead:</strong> {{ contextSizeGB.toFixed(2) }}GB (based on {{ contextSize.toLocaleString() }} token context)
   </div>
 
   <!-- Memory bars section -->
-  <div v-if="recommendedModel.details" :class="$style.memorySection">
+  <div v-if="recommendedModel.details" :class="[ $style.memorySection, (vramOverflow || ramOverflow) ? $style.memoryWarningBox : '' ]">
     <div :class="$style.memoryBarContainer">
       <div :class="$style.memoryBarLabel">
         <span>RAM Usage</span>
-        <span>{{ ramWindowsOverhead }}GB (Overhead) + {{ ramModelSize.toFixed(1) }}GB (Model) = {{ (ramWindowsOverhead + ramModelSize).toFixed(1) }}GB / {{ ram.toFixed(1) }}GB</span>
+        <span>
+          Overhead: {{ (Number(ramWindowsOverheadGB) || 0).toFixed(2) }}GB (Windows etc.) |
+          Context: {{ contextInRAMDisplay }}GB |
+          Model: {{ modelInRAMDisplay }}GB =
+          Used: {{ ramUsedDisplay }}GB / {{ (Number(ram) || 0).toFixed(2) }}GB
+        </span>
       </div>
       <div :style="ramBarStyle"></div>
     </div>
 
-    <div :class="$style.memoryBarContainer">
+    <div :class="$style.memoryBarContainer" style="margin-top:1rem;">
       <div :class="$style.memoryBarLabel">
         <span>VRAM Usage</span>
-        <span>{{ vramWindowsOverhead }}GB (Overhead) + {{ vramModelSize.toFixed(1) }}GB (Model + Context) = {{ (vramWindowsOverhead + vramModelSize).toFixed(1) }}GB / {{ vram.toFixed(1) }}GB</span>
+        <span>
+          Overhead: {{ (Number(vramWindowsOverheadGB) || 0).toFixed(2) }}GB (Windows etc.) |
+          Context: {{ contextInVRAMDisplay }}GB |
+          Model: {{ modelInVRAMDisplay }}GB =
+          Used: {{ vramUsedDisplay }}GB / {{ (Number(vram) || 0).toFixed(2) }}GB
+        </span>
       </div>
       <div :style="vramBarStyle"></div>
     </div>
 
-    <div :class="$style.legend">
-      <div v-for="item in legendItems" :key="item.label" :class="$style.legendItem">
-        <div :class="$style.legendColor" :style="{ backgroundColor: item.color }"></div>
-        <span>{{ item.label }}</span>
-      </div>
-    </div>
+    
   </div>
 </div>
 </template>
