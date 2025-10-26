@@ -4,53 +4,22 @@ title: Dense Models
 
 # Dense Models
 
-Dense models activate **all parameters** for every input. They are simpler to train and deploy but can be less efficient at scale compared to sparse alternatives like Mixture-of-Experts (MoE) models.
+Dense models activate **all parameters** for every input. They are simpler to train, but have lower inference throughput (Tokens/s) than Mixture-of-Experts (MoE) models of a similar *total* parameter count (due to the Mixture-of-Experts model only activating a fraction of the parameters per token).
 
 ## How Dense Models Work
 
 In a dense Large Language Model (LLM), every layer processes the entire input using **all of its parameters**, regardless of the specific tokens or context. This means:
 
 - **Full parameter utilization**: Every weight in the model contributes to the output for any given input.
-- **Uniform computation**: Each forward pass involves the same amount of computation, making inference predictable and deterministic.
 - **Straightforward architecture**: Dense models follow standard transformer architectures without dynamic routing or conditional computation.
+- **Easier to train**: Due to their simpler architecture, dense models are generally more straightforward to train (although training any large model is still extremely difficult).
 
-For example, in a 7B-parameter dense model, all 7 billion parameters are involved in generating each token—whether the input is a simple question or a complex reasoning task.
+## Tradeoffs
 
-## Advantages
+Given that a dense model has lower inference throughput than an MoE model of the same *total* parameter count, one might question why one would even use them.
 
-- **Simplicity**: Easier to implement, debug, and optimize due to uniform computation paths.
-- **Stable training**: Gradient flow is consistent across all parameters, leading to more predictable convergence.
-- **Hardware efficiency**: Dense computation maps well to modern accelerators (e.g., GPUs, TPUs), which excel at parallel matrix operations.
-- **Mature tooling**: Most existing frameworks (like Hugging Face Transformers, PyTorch, and VLLM) are optimized for dense models.
+One part of this answer is the relative **ease of training and iteration**. The simpler architecture is easier to debug and allows for faster experimentation with changes, like new activation functions.
 
-## Trade-offs
+Another, more important difference, is **parameter efficiency**. In an MoE, different experts (which are themselves small dense models) might learn to store similar information, leading to potential *redundancy*. In a dense model, all parameters are interconnected and used for every input. This means a 24B dense model may store knowledge with less redundancy than a 24B MoE model.
 
-While dense models offer reliability and simplicity, they come with notable limitations:
-
-- **High computational cost**: Every inference uses the full model, leading to higher latency and energy consumption.
-- **Limited scalability**: As model size grows (e.g., 70B+ parameters), inference becomes prohibitively expensive without specialized hardware.
-- **Inefficiency for simple tasks**: Even trivial inputs consume the same resources as complex ones, wasting compute.
-
-## Comparison with Sparse Models
-
-| Feature               | Dense Models                     | Sparse Models (e.g., MoE)              |
-|-----------------------|----------------------------------|----------------------------------------|
-| Parameters activated  | 100%                             | Subset (e.g., 10-20%)                  |
-| Inference cost        | High and fixed                   | Lower and input-dependent              |
-| Training complexity   | Low                              | Higher (requires expert routing)       |
-| Hardware utilization  | Excellent on GPUs/TPUs           | May suffer from load imbalance         |
-| Use case              | General-purpose, stable serving  | Scalable, cost-efficient large models  |
-
-## When to Use Dense Models
-
-Dense models are ideal when:
-- You need **predictable latency** and throughput.
-- Your deployment environment has **consistent hardware** (e.g., cloud GPUs).
-- Model size is **moderate** (e.g., <13B parameters).
-- You prioritize **ease of fine-tuning** and integration with existing pipelines.
-
-Popular dense models include **Llama 3**, **Mistral 7B**, and **Gemma**.
-
-## Conclusion
-
-Dense models remain the backbone of today's LLM ecosystem due to their robustness, simplicity, and strong performance. While sparse architectures offer exciting paths toward scaling, dense models continue to set the standard for reliability and accessibility—especially for applications where efficiency is secondary to consistency and ease of use.
+Therefore, if **knowledge density** (the amount of unique information stored per parameter) is the main priority, a dense model can be more parameter-efficient, though this comes at the significant cost of slower inference.
