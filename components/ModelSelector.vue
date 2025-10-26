@@ -74,7 +74,14 @@ const recommendedModel = computed(() => {
       const hasParams = details && typeof details.parameters === 'number'
       const quant = details?.quantization
       if (!hasParams || !quant) return `${name} (unknown)`
-      return `${name} ${details.parameters}B (${quant})`
+
+      const match = name.match(/ \d+B /); // Only one expected match
+
+      if (!match) {
+        return `${name} ${details.parameters}B (${quant})`
+      }
+
+      return `${name} (${quant})`
     }
 
     // Choose the single model that yields the largest file-size (worst-case) for conservative calculations.
