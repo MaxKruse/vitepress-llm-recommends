@@ -1,6 +1,33 @@
 <script setup>
 import { ref, computed } from 'vue'
 
+// Add model mapping for LMStudio URIs
+const modelToHfMapping = {
+  "Qwen3 Coder 30B A3B Instruct": "unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF",
+  "Qwen3 30B Instruct 2507": "unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF",
+  "Mistral Small 3.2": "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF",
+  "GPT OSS 20B": "openai/gpt-oss-20b",
+  "GPT OSS 120B": "openai/gpt-oss-120b",
+  "Gemma 3 27B": "unsloth/gemma-3-27b-it-GGUF",
+  "Gemma 3 12B": "unsloth/gemma-3-12b-it-GGUF",
+  "Qwen3 30B Thinking 2507": "unsloth/Qwen3-30B-A3B-Thinking-2507-GGUF",
+  "Qwen3 4B Thinking 2507": "unsloth/Qwen3-4B-Thinking-2507-GGUF",
+  "Qwen3 4B Instruct 2507": "unsloth/Qwen3-4B-Instruct-2507-GGUF"
+};
+
+// Function to get LMStudio URI
+const getLmstudioUri = computed(() => {
+  if (!recommendedModel.value.details) return null;
+  
+  const modelName = recommendedModel.value.model;
+  const hfPath = modelToHfMapping[modelName];
+  
+  if (!hfPath) return null;
+  
+  const [uploader, model] = hfPath.split('/');
+  return `lmstudio://open_from_hf?model=${uploader}/${model}`;
+});
+
 const props = defineProps({
   modelDefinitions: {
     type: Array,
@@ -715,6 +742,99 @@ const contextSizeIndex = computed({
   padding: 0.5rem;
   border-radius: 8px;
 }
+
+/* Compact memory table styles */
+.memoryTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+}
+
+.memoryTable th,
+.memoryTable td {
+  padding: 0.5rem;
+  text-align: center;
+  border: 1px solid var(--vp-c-divider);
+}
+
+.memoryTable th {
+  background-color: var(--vp-c-bg-soft);
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+.memoryTable tr:first-child th {
+  border-top: none;
+}
+
+.memoryTable tr:last-child td {
+  border-bottom: none;
+}
+
+.memoryTable tr td:first-child,
+.memoryTable tr th:first-child {
+  border-left: none;
+}
+
+.memoryTable tr td:last-child,
+.memoryTable tr th:last-child {
+  border-right: none;
+}
+
+.memoryTable .memory-type-header {
+  font-weight: 600;
+  background-color: var(--vp-c-bg-soft);
+  width: 60px;
+}
+
+.memoryTable .memory-value {
+  font-family: var(--vp-font-family-mono);
+  font-weight: 500;
+}
+
+.memoryTable .memory-value.warning {
+  color: var(--vp-c-red-2);
+}
+
+.result {
+  padding-top: 1rem;
+  border-top: 1px solid var(--vp-c-divider);
+  position: relative;
+}
+
+.modelContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.lmstudioButton {
+  float: right;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  background-color: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 1px solid var(--vp-c-brand-soft);
+  flex-shrink: 0;
+}
+
+.lmstudioButton:hover {
+  background-color: var(--vp-c-brand-softer);
+  color: var(--vp-c-bg-soft);
+  border-color: var(--vp-c-brand-1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.lmstudioButton:active {
+  transform: translateY(0);
+}
+
 </style>
 
 <template>
@@ -771,6 +891,18 @@ const contextSizeIndex = computed({
     >
       {{ recommendedModel.formattedModel || recommendedModel.model }}
     </span>
+
+    <!-- LMStudio button -->
+      <template v-if="getLmstudioUri">
+        <a 
+          :href="getLmstudioUri" 
+          target="_blank" 
+          :class="$style.lmstudioButton"
+        >
+          Use in LMStudio
+        </a>
+      </template>
+
     <div v-if="recommendedModel.plausibleModels && recommendedModel.plausibleModels.length > 0" :class="$style.details">
       <small>Also considered: {{ recommendedModel.plausibleModels.join(', ') }}</small>
     </div>
@@ -789,33 +921,33 @@ const contextSizeIndex = computed({
 
   <!-- Memory bars section -->
   <div v-if="recommendedModel.details" :class="[ $style.memorySection, (vramOverflow || ramOverflow) ? $style.memoryWarningBox : '' ]">
-    <div :class="$style.memoryBarContainer">
-      <div :class="$style.memoryBarLabel">
-        <span>RAM Usage</span>
-        <span>
-          Overhead: {{ (Number(ramWindowsOverheadGB) || 0).toFixed(2) }}GB (Windows etc.) |
-          Context: {{ contextInRAMDisplay }}GB |
-          Model: {{ modelInRAMDisplay }}GB =
-          Used: {{ ramUsedDisplay }}GB / {{ (Number(ram) || 0).toFixed(2) }}GB
-        </span>
-      </div>
-      <div :style="ramBarStyle"></div>
-    </div>
-
-    <div :class="$style.memoryBarContainer" style="margin-top:1rem;">
-      <div :class="$style.memoryBarLabel">
-        <span>VRAM Usage</span>
-        <span>
-          Overhead: {{ (Number(vramWindowsOverheadGB) || 0).toFixed(2) }}GB (Windows etc.) |
-          Context: {{ contextInVRAMDisplay }}GB |
-          Model: {{ modelInVRAMDisplay }}GB =
-          Used: {{ vramUsedDisplay }}GB / {{ (Number(vram) || 0).toFixed(2) }}GB
-        </span>
-      </div>
-      <div :style="vramBarStyle"></div>
-    </div>
-
-    
+    <table :class="$style.memoryTable">
+      <thead>
+        <tr>
+          <th :class="$style.memoryTypeHeader"></th>
+          <th>Total</th>
+          <th>Context</th>
+          <th>Model</th>
+          <th>Leftover</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td :class="$style.memoryTypeHeader">RAM</td>
+          <td :class="$style.memoryValue">{{ (Number(ram) || 0).toFixed(2) }}GB</td>
+          <td :class="$style.memoryValue">{{ contextInRAMDisplay }}GB</td>
+          <td :class="$style.memoryValue">{{ modelInRAMDisplay }}GB</td>
+          <td :class="[$style.memoryValue, ramOverflow ? $style.warning : '']">{{ (Number(ramLeftover) || 0).toFixed(2) }}GB</td>
+        </tr>
+        <tr>
+          <td :class="$style.memoryTypeHeader">VRAM</td>
+          <td :class="$style.memoryValue">{{ (Number(vram) || 0).toFixed(2) }}GB</td>
+          <td :class="$style.memoryValue">{{ contextInVRAMDisplay }}GB</td>
+          <td :class="$style.memoryValue">{{ modelInVRAMDisplay }}GB</td>
+          <td :class="[$style.memoryValue, vramOverflow ? $style.warning : '']">{{ (Number(vramLeftover) || 0).toFixed(2) }}GB</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 </template>
