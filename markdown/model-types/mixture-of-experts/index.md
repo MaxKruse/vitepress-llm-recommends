@@ -83,3 +83,8 @@ A smaller, more heavily quantized model will be faster, even with the same archi
 * **11GB (Q2_K) File:** 835 pp / 41 t/s
 
 The smaller 11GB file is nearly 3x faster at processing the prompt and 2x faster at generating tokens because less data needs to be moved and processed for each step.
+
+
+# Sources
+
+- **[https://huggingface.co/blog/moe](https://huggingface.co/blog/moe)**

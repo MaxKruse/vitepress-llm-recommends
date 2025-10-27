@@ -93,3 +93,10 @@ If you ask the LLM, "Why is my house not clean?" it might correctly infer, "Beca
 However, it could also incorrectly combine unrelated facts and produce a hallucination:
 
 > "Your house is not clean because the city is not paying your parents."
+
+
+# Sources
+
+- **[Parameters](https://www.ibm.com/think/topics/llm-parameters/)**
+- **[Quantization](https://www.datacamp.com/tutorial/quantization-for-large-language-models/)**
+- **[Hallucinations](https://openai.com/index/why-language-models-hallucinate/)**
