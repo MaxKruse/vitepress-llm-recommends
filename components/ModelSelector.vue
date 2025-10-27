@@ -206,7 +206,7 @@ function getQuantizationLevel(quantization) {
   const match = quantization.match(/Q([1-8])_K_XL/);
   if (match) {
     const baseValue = parseInt(match[1]);
-    return baseValue * 1.27; // Slightly higher, about x1.1 as float
+    return baseValue * 1.25; // Slightly higher, about x1.1 as float
   }
   
   return 0; // default to 0 if not recognized
@@ -215,7 +215,7 @@ function getQuantizationLevel(quantization) {
 // Calculate file size based on parameters and quantization
 // Vision adapter constant: some models ship an extra vision-adapter (~1.2 GB)
 // which is part of the model weights (not context overhead) and must be added
-const VISION_ADAPTER_SIZE_GB = 1.2
+const VISION_ADAPTER_SIZE_GB = 0.9
 
 // Helper: detect models that include a vision adapter (Mistral Small 3.2 family, Gemma 3 family)
 function hasVisionAdapter(modelName) {
