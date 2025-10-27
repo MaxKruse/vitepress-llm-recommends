@@ -75,7 +75,7 @@ const recommendedModel = computed(() => {
       const quant = details?.quantization
       if (!hasParams || !quant) return `${name} (unknown)`
 
-      const match = name.match(/ \d+B /); // Only one expected match
+      const match = name.match(/\d+B/); // Only one expected match
 
       if (!match) {
         return `${name} ${details.parameters}B (${quant})`
@@ -91,7 +91,8 @@ const recommendedModel = computed(() => {
     for (const e of modelEntries) {
       const params = e.details?.parameters ?? 0
       const quant = e.details?.quantization ?? ''
-      const size = calculateFileSize(params, quant, true)
+      // Pass the model name so calculateFileSize can detect vision-adapter models
+      const size = calculateFileSize(params, quant, true, e.name)
       if (size > maxSize) {
         maxSize = size
         chosen = e
@@ -210,9 +211,27 @@ function getQuantizationLevel(quantization) {
 }
 
 // Calculate file size based on parameters and quantization
-function calculateFileSize(paramsB, quantization, addContext = true) {
+// Vision adapter constant: some models ship an extra vision-adapter (~1.2 GB)
+// which is part of the model weights (not context overhead) and must be added
+const VISION_ADAPTER_SIZE_GB = 1.2
+
+// Helper: detect models that include a vision adapter (Mistral Small 3.2 family, Gemma 3 family)
+function hasVisionAdapter(modelName) {
+  if (!modelName) return false
+  // Match "Mistral Small 3.2" family (case-insensitive) and "Gemma 3" family
+  return /mistral\s*small\s*3\.2/i.test(modelName) || /gemma\s*3/i.test(modelName)
+}
+
+function calculateFileSize(paramsB, quantization, addContext = true, modelName = '') {
   const quantLevel = getQuantizationLevel(quantization)
   let totalFileSizeInGB = paramsB * (quantLevel / 8) // divide by 8 for "bytes"
+
+  // Add vision adapter size to model weights when model requires it.
+  // This is applied regardless of addContext because it's part of the model weights.
+  if (hasVisionAdapter(modelName)) {
+    totalFileSizeInGB += VISION_ADAPTER_SIZE_GB
+  }
+
   // Replace the fixed 3GB context size overhead with dynamic calculation
   if (addContext)
     totalFileSizeInGB = totalFileSizeInGB + calculateContextOverhead()
@@ -256,7 +275,13 @@ const ramWindowsOverhead = computed(() => calculateWindowsOverhead(ram.value))
 // Core computed sizes (model weights only, context overhead, windows overhead)
 const modelSizeGB = computed(() => {
   if (!recommendedModel.value.details) return 0
-  return calculateFileSize(recommendedModel.value.details.parameters, recommendedModel.value.details.quantization, false)
+  // Pass recommendedModel.value.model so the modelSize includes any vision-adapter weight
+  return calculateFileSize(
+    recommendedModel.value.details.parameters,
+    recommendedModel.value.details.quantization,
+    false,
+    recommendedModel.value.model
+  )
 })
 const contextSizeGB = computed(() => calculateContextOverhead()) // Fixed: Always calculate based on current context size
 const vramWindowsOverheadGB = computed(() => vramWindowsOverhead.value)
@@ -901,7 +926,8 @@ const contextSizeIndex = computed({
     <div v-if="recommendedModel.details" :class="$style.details">
       <small>
         Parameters: {{ recommendedModel.details.parameters ? recommendedModel.details.parameters + 'B' : '(unknown)' }} |
-        Quantization: {{ recommendedModel.details.quantization ? recommendedModel.details.quantization.toUpperCase() : '(unknown)' }}
+        Quantization: {{ recommendedModel.details.quantization ? recommendedModel.details.quantization.toUpperCase() : '(unknown)' }} |
+        Model Memory Impact: {{ modelSizeGB.toFixed(1) }} GB
       </small>
     </div>
   </div>
