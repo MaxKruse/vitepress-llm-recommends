@@ -223,15 +223,15 @@ function calculateFileSize(paramsB, quantization, addContext = true) {
 function calculateContextOverhead() {
   // Start at 4K = 1GB overhead
   const baseContext = 4096
-  const baseOverhead = 1
+  const baseOverhead = 0.25
   
   // Calculate how many steps we are from the base
   let currentSize = baseContext
   let overhead = baseOverhead
   
   while (currentSize < contextSize.value) {
-    currentSize *= 1.33
-    overhead *= 1.33
+    currentSize *= 1.5
+    overhead *= 1.5
   }
   
   return overhead
