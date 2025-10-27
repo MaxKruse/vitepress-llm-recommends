@@ -198,16 +198,18 @@ const modelNameClasses = computed(() => {
 
 // Calculate quantization level from quantization string
 function getQuantizationLevel(quantization) {
-  if (quantization.includes('BF16') || quantization.includes('F16')) return 16
-  if (quantization.includes('Q8')) return 8
-  if (quantization.includes('Q6')) return 6
-  if (quantization.includes('Q5')) return 5
-  if (quantization.includes('Q4')) return 4
-  if (quantization.includes('MXFP4')) return 4
-  if (quantization.includes('Q3')) return 3
-  if (quantization.includes('Q2')) return 2
-  if (quantization.includes('Q1')) return 1
-  return 0 // default to 0 if not recognized
+  if (quantization.includes('BF16') || quantization.includes('F16')) {
+    return 16;
+  }
+  
+  // Match Q followed by a digit (Q1-Q8)
+  const match = quantization.match(/Q([1-8])_K_XL/);
+  if (match) {
+    const baseValue = parseInt(match[1]);
+    return baseValue * 1.27; // Slightly higher, about x1.1 as float
+  }
+  
+  return 0; // default to 0 if not recognized
 }
 
 // Calculate file size based on parameters and quantization
