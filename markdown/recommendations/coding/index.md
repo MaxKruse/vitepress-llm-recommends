@@ -3,11 +3,11 @@ title: Coding
 ---
 
 # Coding Recommendations  
-**Prioritizing Very High Precision in Code Generation, Completion, and Debugging**
+**Prioritizing Very High Precision in Code Generation and Debugging**
 
 When working with AI-assisted coding, **precision is non-negotiable**. Even minor hallucinations, syntactic errors, or incorrect logic can introduce bugs, security vulnerabilities, or maintenance debt. These recommendations are tailored for developers who require **extremely high-fidelity outputs**—not just plausible-looking code, but **correct, production-ready, and logically sound** implementations.
 
-Use the selector below to identify the best model **that balances your hardware constraints with the highest achievable precision**:
+Use the selector below to identify the best model for a given hardware configuration:
 
 <script setup>
 import ModelSelector from '../../../components/ModelSelector.vue'
