@@ -3,16 +3,16 @@ import { ref, computed } from 'vue'
 
 // Add model mapping for LMStudio URIs
 const modelToHfMapping = {
-  "Qwen3 Coder 30B A3B Instruct": "unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF",
+  "Qwen3 4B Instruct 2507": "unsloth/Qwen3-4B-Instruct-2507-GGUF",
+  "Qwen3 4B Thinking 2507": "unsloth/Qwen3-4B-Thinking-2507-GGUF",
   "Qwen3 30B Instruct 2507": "unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF",
+  "Qwen3 30B Thinking 2507": "unsloth/Qwen3-30B-A3B-Thinking-2507-GGUF",
+  "Qwen3 Coder 30B A3B Instruct": "unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF",
   "Mistral Small 3.2": "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF",
   "GPT OSS 20B": "openai/gpt-oss-20b",
   "GPT OSS 120B": "openai/gpt-oss-120b",
-  "Gemma 3 27B": "unsloth/gemma-3-27b-it-GGUF",
   "Gemma 3 12B": "unsloth/gemma-3-12b-it-GGUF",
-  "Qwen3 30B Thinking 2507": "unsloth/Qwen3-30B-A3B-Thinking-2507-GGUF",
-  "Qwen3 4B Thinking 2507": "unsloth/Qwen3-4B-Thinking-2507-GGUF",
-  "Qwen3 4B Instruct 2507": "unsloth/Qwen3-4B-Instruct-2507-GGUF"
+  "Gemma 3 27B": "unsloth/gemma-3-27b-it-GGUF",
 };
 
 // Function to get LMStudio URI
