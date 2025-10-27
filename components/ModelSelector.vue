@@ -314,11 +314,6 @@ const modelInRAM = computed(() => {
   return chunksToPlaceInRAM * chunkSizeGB.value;
 });
 
-// --- End NEW: Chunk-based allocation logic ---
-
-// Amount of context allocated to RAM (GB). This is now just the value of contextInRAM.
-const ramContextOverhead = computed(() => contextInRAM.value)
-
 // Totals used
 const vramUsedTotal = computed(() => vramWindowsOverheadGB.value + contextInVRAM.value + modelInVRAM.value)
 const ramUsedTotal = computed(() => ramWindowsOverheadGB.value + contextInRAM.value + modelInRAM.value)
@@ -404,16 +399,6 @@ const ramBarStyle = computed(() => {
     width: '100%'
   }
 })
-
-// Legend for memory bars - now includes context/model locations
-const legendItems = [
-  { label: 'Windows Overhead', color: 'var(--vp-c-blue-2)' },
-  { label: 'Context (in VRAM)', color: 'var(--vp-c-purple-2)' },
-  { label: 'Context (in RAM)', color: 'var(--vp-c-purple-soft)' },
-  { label: 'Model (in VRAM)', color: 'var(--vp-c-orange-2)' },
-  { label: 'Model (in RAM)', color: 'var(--vp-c-orange-soft)' },
-  { label: 'Available', color: 'var(--vp-c-gray-3)' }
-]
 
 // Context size options for the slider
 const contextSizeOptions = computed(() => {
@@ -924,6 +909,8 @@ const contextSizeIndex = computed({
   <!-- Context overhead details -->
   <div v-if="recommendedModel.details" :class="$style.contextDetails">
     <strong>Context Overhead:</strong> {{ contextSizeGB.toFixed(2) }}GB (based on {{ contextSize.toLocaleString() }} token context)
+    <br>
+    <small>Note: The size of context in GB is an estimate that shows the "worst case". It may be smaller in actual use, but is assumed to be higher for safely assessing upper bounds.</small>
   </div>
 
   <!-- Memory bars section -->
