@@ -247,7 +247,7 @@ function calculateWindowsOverhead(ramSize) {
 
 // Fixed: Added missing computed property for VRAM overhead
 const vramWindowsOverhead = computed(() => {
-  return 1
+  return 1.5
 })
 
 // Memory bar & allocation calculations (new)
