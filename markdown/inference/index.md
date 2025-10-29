@@ -6,16 +6,13 @@ title: Inference
 
 This section covers inference strategies, optimization techniques, and deployment considerations for AI models—particularly those that can run **locally** on consumer hardware.
 
-> ⚠️ **Important Disclaimer Regarding Ollama**  
-> While Ollama offers a convenient interface for running local LLMs, **serious concerns have been raised** about its approach to open source. The project has been criticized for:
+> [!WARNING]
+> While Ollama excels at simplifying local LLM setup, be aware of several significant challenges. It demands substantial hardware (high RAM and powerful GPUs) and is prone to stability issues like service crashes, memory leaks, and inconsistent performance. Users should also expect the following:
 > 
-> - **Lack of true open-source commitment**: Despite using open weights from community models, Ollama itself is **not fully open source**—its server component is proprietary.
-> - **Commercialization of community work**: Ollama packages and redistributes models created and shared by the open-source community, often without clear attribution or contribution back to those projects.
-> - **Pattern of behavior**: The founders have a history tied to Docker, a project that similarly started as open-source infrastructure but later shifted toward aggressive commercialization, leaving many community contributors disillusioned.
-> 
-> Given these issues, **we strongly advise caution**. If you value software freedom, transparency, and sustainable open-source ecosystems, consider using fully open alternatives like `llama.cpp` or transparent tools like `LM Studio`.  
-> 
-> **Support tools that support the community—not those that extract from it.**
+> *   **Manual Configuration:** Default settings, such as context length, are often suboptimal and require manual adjustments for good performance.
+> *   **Limited Troubleshooting:** Documentation is often sparse, and cryptic error messages make diagnosing problems difficult without community support.
+> *   **Production Unsuitability:** The tool is designed for development and experimentation, not high-throughput production workloads.
+> *   **Misleading Naming Practices:** Some models were mislabeled in the past to create additional hype and gain attention (e.g. Deepseek R1 Distills (4b, 7b, 8b, etc.) being advertised as the fully capable Deepseek-R1 671B)
 
 ## Local Inference Engines
 
