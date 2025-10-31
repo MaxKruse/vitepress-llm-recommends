@@ -199,23 +199,23 @@ const modelNameClasses = computed(() => {
 // Calculate quantization level from quantization string
 function getQuantizationLevel(quantization) {
   if (quantization.includes('BF16') || quantization.includes('F16')) {
-    return 16;
+    return 16.0;
   }
   
   // Match Q followed by a digit (Q1-Q8)
   const match = quantization.match(/Q([1-8])_K_XL/);
   if (match) {
     const baseValue = parseInt(match[1]);
-    return baseValue * 1.25; // Slightly higher, about x1.1 as float
+    return parseFloat(baseValue * 1.25); // Slightly higher, about x1.1 as float
   }
   
-  return 0; // default to 0 if not recognized
+  return 0.0; // default to 0 if not recognized
 }
 
 // Calculate file size based on parameters and quantization
-// Vision adapter constant: some models ship an extra vision-adapter (~1.2 GB)
+// Vision adapter constant: some models ship an extra vision-adapter
 // which is part of the model weights (not context overhead) and must be added
-const VISION_ADAPTER_SIZE_GB = 0.9
+const VISION_ADAPTER_SIZE_GB = 1.8
 
 // Helper: detect models that include a vision adapter (Mistral Small 3.2 family, Gemma 3 family)
 function hasVisionAdapter(modelName) {
@@ -226,7 +226,7 @@ function hasVisionAdapter(modelName) {
 
 function calculateFileSize(paramsB, quantization, addContext = true, modelName = '') {
   const quantLevel = getQuantizationLevel(quantization)
-  let totalFileSizeInGB = paramsB * (quantLevel / 8) // divide by 8 for "bytes"
+  let totalFileSizeInGB = paramsB * (quantLevel / 8.0) // divide by 8 for "bytes"
 
   // Add vision adapter size to model weights when model requires it.
   // This is applied regardless of addContext because it's part of the model weights.
@@ -908,7 +908,7 @@ const contextSizeIndex = computed({
                recommendedModel.hasGlow && recommendedModel.usefulness === 0 ? $style.modelNameNoMatch : '']"
       :style="{ backgroundColor: recommendedModel.bg, color: recommendedModel.color, borderColor: recommendedModel.borderColor }"
     >
-      {{ recommendedModel.formattedModel || recommendedModel.model }}
+      {{ recommendedModel.formattedModel || recommendedModel.model }} <span v-if="hasVisionAdapter(recommendedModel.formattedModel)" style="font-weight: bolder; background-color: rgba(250, 250, 0, 0.5);">(includes Vision)</span>
     </span>
 
     <!-- LMStudio button -->
