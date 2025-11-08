@@ -206,7 +206,7 @@ function getQuantizationLevel(quantization) {
   const match = quantization.match(/Q([1-8])_K_XL/);
   if (match) {
     const baseValue = parseInt(match[1]);
-    return parseFloat(baseValue * 1.25); // Slightly higher, about x1.1 as float
+    return parseFloat(baseValue * 1.2); // Slightly higher
   }
   
   return 0.0; // default to 0 if not recognized
@@ -215,13 +215,27 @@ function getQuantizationLevel(quantization) {
 // Calculate file size based on parameters and quantization
 // Vision adapter constant: some models ship an extra vision-adapter
 // which is part of the model weights (not context overhead) and must be added
-const VISION_ADAPTER_SIZE_GB = 1.8
+function VisionAdapterSize(modelName) {
+  if (/mistral\s*small/i.test(modelName)) {
+    return 0.9
+  }
+
+  if (/gemma\s*3/i.test(modelName)) {
+    return 0.9;
+  }
+
+  if (/qwen3\s*vl/i.test(modelName)) {
+    return 1.3;
+  };
+
+  return 0;
+}
 
 // Helper: detect models that include a vision adapter (Mistral Small 3.2 family, Gemma 3 family)
 function hasVisionAdapter(modelName) {
   if (!modelName) return false
   // Match "Mistral Small 3.2" family (case-insensitive) and "Gemma 3" family
-  return /mistral\s*small\s*3\.2/i.test(modelName) || /gemma\s*3/i.test(modelName)
+  return /mistral\s*small/i.test(modelName) || /gemma\s*3/i.test(modelName) || /qwen3\s*vl/i.test(modelName)
 }
 
 function calculateFileSize(paramsB, quantization, addContext = true, modelName = '') {
@@ -231,7 +245,7 @@ function calculateFileSize(paramsB, quantization, addContext = true, modelName =
   // Add vision adapter size to model weights when model requires it.
   // This is applied regardless of addContext because it's part of the model weights.
   if (hasVisionAdapter(modelName)) {
-    totalFileSizeInGB += VISION_ADAPTER_SIZE_GB
+    totalFileSizeInGB += VisionAdapterSize(modelName)
   }
 
   // Replace the fixed 3GB context size overhead with dynamic calculation

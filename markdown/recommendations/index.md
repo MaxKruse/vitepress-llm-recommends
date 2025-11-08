@@ -20,6 +20,9 @@ Choose the right model and hardware setup based on your specific use case. Below
 
 - [**Creative Storywriting**](./storywriting/)  
   Architectures and configurations for long-form, coherent, and imaginative text.
+  
+- [**Vision Tasks**](./vision/)  
+  Models with superior visual understanding for image analysis.
 
 Each guide includes model suggestions, quantization tips, and minimum/recommended hardware specs.
 

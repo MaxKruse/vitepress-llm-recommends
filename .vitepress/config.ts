@@ -52,6 +52,7 @@ export default defineConfig({
           },
           { text: "STEM", link: "/recommendations/stem/" },
           { text: "Storywriting", link: "/recommendations/storywriting/" },
+          { text: "Vision", link: "/recommendations/vision/" },
         ],
       },
     ],
