@@ -208,6 +208,12 @@ function getQuantizationLevel(quantization) {
     const baseValue = parseInt(match[1]);
     return parseFloat(baseValue * 1.2); // Slightly higher
   }
+
+  const fpMatch = quantization.match(/\w+FP([1-8])/);
+  if (fpMatch) {
+    const baseValue = parseInt(fpMatch[1], 10);
+    return parseFloat(baseValue * 1.2); 
+  }
   
   return 0.0; // default to 0 if not recognized
 }
