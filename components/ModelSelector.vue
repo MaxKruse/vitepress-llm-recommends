@@ -701,6 +701,33 @@ const contextSizeGB = computed(() => calculateContextOverhead()) // Fixed: Alway
   transform: translateY(0);
 }
 
+.contextControlGroup {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.contextControlLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  padding-bottom: 0.25rem;
+}
+
+.contextValue {
+  background: var(--vp-c-bg-soft);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.92rem;
+  border: 1px solid var(--vp-c-border);
+  min-width: 120px;
+  text-align: center;
+}
+
 </style>
 
 <template>
@@ -726,11 +753,15 @@ const contextSizeGB = computed(() => calculateContextOverhead()) // Fixed: Alway
         <option v-for="v in props.vramOptions" :key="v" :value="v">{{ v }}</option>
       </select>
     </div>
-    <!-- New context size control -->
-    <div :class="$style.contextControlGroup">
-      <label :class="$style.contextControlLabel">Context Size: {{ contextSize }} tokens</label>
-    </div>
   </div>
+
+
+  <div :class="$style.contextControlGroup">
+      <label :class="$style.contextControlLabel">
+        Assumed Context Size for this usecase:
+        <span :class="$style.contextValue">{{ contextSize.toLocaleString() }} tokens</span>
+      </label>
+    </div>
 
   <div :class="$style.result">
     <strong :class="$style.resultStrong">Recommended model:</strong>
