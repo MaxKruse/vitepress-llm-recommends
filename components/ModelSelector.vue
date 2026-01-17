@@ -45,13 +45,17 @@ const props = defineProps({
   vramOptions: {
     type: Array,
     default: () => [0, 4, 6, 8, 12, 16, 24, 32]
+  },
+  contextSize: {
+    type: Number,
+    default: () => 1024*8
   }
 })
 
 const ram = ref(16)
 const vram = ref(8)
-// New context size state - default to 16k
-const contextSize = ref(16384)
+
+const contextSize = computed(() => props.contextSize)
 
 // Use the prop for recommendation rules
 const recommendationRules = computed(() => props.modelDefinitions)
@@ -271,8 +275,8 @@ function calculateContextOverhead() {
   let overhead = baseOverhead
   
   while (currentSize < contextSize.value) {
-    currentSize *= 1.5
-    overhead *= 1.5
+    currentSize *= 1.33
+    overhead *= 1.33
   }
   
   return overhead
@@ -902,17 +906,6 @@ const contextSizeIndex = computed({
     <!-- New context size control -->
     <div :class="$style.contextControlGroup">
       <label :class="$style.contextControlLabel">Context Size: {{ contextSize }} tokens</label>
-      <div :class="$style.contextSliderContainer">
-        <div :class="$style.contextSliderWrapper">
-          <input 
-            type="range" 
-            :min="0" 
-            :max="contextSizeOptions.length - 1" 
-            v-model.number="contextSizeIndex"
-            :class="$style.contextSlider"
-          />
-        </div>
-      </div>
     </div>
   </div>
 
@@ -961,35 +954,5 @@ const contextSizeIndex = computed({
     <small>Note: The size of context in GB is an estimate that shows the "worst case". It may be smaller in actual use, but is assumed to be higher for safely assessing upper bounds.</small>
   </div>
 
-  <!-- Memory bars section -->
-  <div v-if="recommendedModel.details" :class="[ $style.memorySection, (vramOverflow || ramOverflow) ? $style.memoryWarningBox : '' ]">
-    <table :class="$style.memoryTable">
-      <thead>
-        <tr>
-          <th :class="$style.memoryTypeHeader"></th>
-          <th>Total</th>
-          <th>Context</th>
-          <th>Model</th>
-          <th>Leftover</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td :class="$style.memoryTypeHeader">RAM</td>
-          <td :class="$style.memoryValue">{{ (Number(ram) || 0).toFixed(2) }}GB</td>
-          <td :class="$style.memoryValue">{{ contextInRAMDisplay }}GB</td>
-          <td :class="$style.memoryValue">{{ modelInRAMDisplay }}GB</td>
-          <td :class="[$style.memoryValue, ramOverflow ? $style.warning : '']">{{ (Number(ramLeftover) || 0).toFixed(2) }}GB</td>
-        </tr>
-        <tr>
-          <td :class="$style.memoryTypeHeader">VRAM</td>
-          <td :class="$style.memoryValue">{{ (Number(vram) || 0).toFixed(2) }}GB</td>
-          <td :class="$style.memoryValue">{{ contextInVRAMDisplay }}GB</td>
-          <td :class="$style.memoryValue">{{ modelInVRAMDisplay }}GB</td>
-          <td :class="[$style.memoryValue, vramOverflow ? $style.warning : '']">{{ (Number(vramLeftover) || 0).toFixed(2) }}GB</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
 </div>
 </template>

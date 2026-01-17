@@ -23,7 +23,7 @@ const models = [
 
 </script>
 
-<ModelSelector :modelDefinitions="models" />
+<ModelSelector :modelDefinitions="models" :contextSize="1024*32" />
 
 # Prompting
 

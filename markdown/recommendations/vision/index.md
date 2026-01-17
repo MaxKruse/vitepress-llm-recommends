@@ -21,6 +21,6 @@ const models = [
 
 </script>
 
-<ModelSelector :modelDefinitions="models" />
+<ModelSelector :modelDefinitions="models" :context="1024*8" />
 
 

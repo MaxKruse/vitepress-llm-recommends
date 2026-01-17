@@ -39,7 +39,7 @@ const models = [
 
 </script>
 
-<ModelSelector :modelDefinitions="models" />
+<ModelSelector :modelDefinitions="models" :context="1024*16" />
 
 Of course. Here is the revised version of your document with improved formatting and readability.
 
