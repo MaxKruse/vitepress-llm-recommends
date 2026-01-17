@@ -303,7 +303,7 @@ const modelSizeGB = computed(() => {
     recommendedModel.value.details.quantization,
     false,
     recommendedModel.value.model
-  )
+  ) * 1.024 // extra padding for 1000 vs 1024 based...
 })
 const contextSizeGB = computed(() => calculateContextOverhead()) // Fixed: Always calculate based on current context size
 const vramWindowsOverheadGB = computed(() => vramWindowsOverhead.value)
