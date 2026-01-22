@@ -13,6 +13,7 @@ const modelToHfMapping = {
   "GPT OSS 120B": "openai/gpt-oss-120b",
   "Gemma 3 12B": "unsloth/gemma-3-12b-it-GGUF",
   "Gemma 3 27B": "unsloth/gemma-3-27b-it-GGUF",
+  "GLM 4.7 Flash": "unsloth/GLM-4.7-Flash-GGUF"
 };
 
 // Function to get LMStudio URI
