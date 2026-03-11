@@ -13,10 +13,10 @@ Use the selector below to identify the best model for a given hardware configura
 import ModelSelector from '../../../components/ModelSelector.vue'
 
 const models = [
-      { ramMin: 64, vramMin: 16, models: [{"GLM 4.7 Flash": { parameters: 30, quantization: 'BF16' }}, {"Qwen3 Coder 30B A3B Instruct": { parameters: 30, quantization: 'BF16' }}], usefulness: 1.0},
-      { ramMin: 64, vramMin: 12, models: [{"GLM 4.7 Flash": { parameters: 30, quantization: 'Q8_K_XL' }}, {"Qwen3 Coder 30B A3B Instruct": { parameters: 30, quantization: 'Q8_K_XL' }}], usefulness: 0.9},
-      { ramMin: 32, vramMin: 16, models: [{"GLM 4.7 Flash": { parameters: 30, quantization: 'Q6_K_XL' }}, {"Qwen3 Coder 30B A3B Instruct": { parameters: 30, quantization: 'Q6_K_XL' }}], usefulness: 0.8},
-      { ramMin: 32, vramMin: 6, models: [{"GLM 4.7 Flash": { parameters: 30, quantization: 'Q4_K_XL' }}, {"Qwen3 Coder 30B A3B Instruct": { parameters: 30, quantization: 'Q4_K_XL' }}], usefulness: 0.7},
+      { ramMin: 64, vramMin: 16, models: [{"Qwen3 Coder Next": { parameters: 80, quantization: 'Q4_K_M' }}, {"GLM 4.7 Flash": { parameters: 30, quantization: 'Q8_K_XL' }}, ], usefulness: 1.0},
+      { ramMin: 64, vramMin: 12, models: [{"Qwen3 Coder Next": { parameters: 80, quantization: 'Q4_K_M' }}, {"GLM 4.7 Flash": { parameters: 30, quantization: 'Q8_K_XL' }}, ], usefulness: 0.9},
+      { ramMin: 32, vramMin: 16, models: [{"GLM 4.7 Flash": { parameters: 30, quantization: 'Q6_K_XL' }}], usefulness: 0.8},
+      { ramMin: 32, vramMin: 6, models: [{"GLM 4.7 Flash": { parameters: 30, quantization: 'Q4_K_XL' }}], usefulness: 0.7},
       { ramMin: 16, vramMin: 4, models: [{"Qwen3 4B Instruct 2507": { parameters: 4, quantization: 'F16' }}], usefulness: 0.3},
       { ramMin: 16, vramMin: 0, models: [{"Qwen3 4B Instruct 2507": { parameters: 4, quantization: 'Q4_K_XL' }}], usefulness: 0},
     ]

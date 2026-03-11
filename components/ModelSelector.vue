@@ -13,7 +13,8 @@ const modelToHfMapping = {
   "GPT OSS 120B": "openai/gpt-oss-120b",
   "Gemma 3 12B": "unsloth/gemma-3-12b-it-GGUF",
   "Gemma 3 27B": "unsloth/gemma-3-27b-it-GGUF",
-  "GLM 4.7 Flash": "unsloth/GLM-4.7-Flash-GGUF"
+  "GLM 4.7 Flash": "unsloth/GLM-4.7-Flash-GGUF",
+  "Qwen3 Coder Next": "unsloth/Qwen3-Coder-Next-GGUF",
 };
 
 // Function to get LMStudio URI
@@ -89,31 +90,19 @@ const recommendedModel = computed(() => {
       return `${name} (${quant})`
     }
 
-    // Choose the single model that yields the largest file-size (worst-case) for conservative calculations.
-    // Use addContext = true when computing file-size for selection as requested.
-    let chosen = modelEntries[0] || { name: 'Unknown', details: null }
-    let maxSize = -Infinity
-    for (const e of modelEntries) {
-      const params = e.details?.parameters ?? 0
-      const quant = e.details?.quantization ?? ''
-      // Pass the model name so calculateFileSize can detect vision-adapter models
-      const size = calculateFileSize(params, quant, true, e.name)
-      if (size > maxSize) {
-        maxSize = size
-        chosen = e
-      }
-    }
+    // Respect author-defined priority: the first model in the matching rule is the primary recommendation.
+    const chosen = modelEntries[0] || { name: 'Unknown', details: null }
 
     // Calculate border color based on usefulness
     const borderColor = calculateBorderColor(matchingRule.usefulness)
     
-    // Build plausibleModels: formatted strings for every model in the matching rule EXCLUDING the chosenModel
+    // Build plausibleModels: formatted strings for every model in the matching rule EXCLUDING the first choice
     const plausibleModels = modelEntries
-      .filter(e => e.name !== chosen.name)
+      .slice(1)
       .map(e => formatModelEntry(e.name, e.details))
 
     return {
-      // Keep 'model' and 'details' pointing to the chosen (largest-by-filesize) model
+      // Keep 'model' and 'details' pointing to the first-priority model
       model: chosen.name,
       // Provide a formatted display string for the primary model for template use
       formattedModel: formatModelEntry(chosen.name, chosen.details),
@@ -203,15 +192,20 @@ const modelNameClasses = computed(() => {
 
 // Calculate quantization level from quantization string
 function getQuantizationLevel(quantization) {
+  if (!quantization || typeof quantization !== 'string') {
+    return 0.0;
+  }
+
   if (quantization.includes('BF16') || quantization.includes('F16')) {
     return 16.0;
   }
-  
-  // Match Q followed by a digit (Q1-Q8)
-  const match = quantization.match(/Q([1-8])_K_XL/);
-  if (match) {
-    const baseValue = parseInt(match[1]);
-    return parseFloat(baseValue * 1.2); // Slightly higher
+
+  // Support common GGUF quant names, e.g. Q4_K_M, Q6_K_XL, Q8_0.
+  // We use the numeric Q-level and apply a small overhead multiplier.
+  const qMatch = quantization.match(/Q(\d+(?:\.\d+)?)/i);
+  if (qMatch) {
+    const baseValue = parseFloat(qMatch[1]);
+    return parseFloat(baseValue * 1.2);
   }
 
   const fpMatch = quantization.match(/\w+FP([1-8])/);
@@ -261,13 +255,25 @@ function calculateFileSize(paramsB, quantization, addContext = true, modelName =
 
   // Replace the fixed 3GB context size overhead with dynamic calculation
   if (addContext)
-    totalFileSizeInGB = totalFileSizeInGB + calculateContextOverhead()
+    totalFileSizeInGB = totalFileSizeInGB + calculateContextOverhead(modelName)
   return totalFileSizeInGB
 }
 
-// Calculate context overhead based on context size
-function calculateContextOverhead() {
-  // Start at 4K = 1GB overhead
+// Qwen3 Next and Qwen3.5 families use linear (flat) context-memory scaling.
+function hasLinearContextScaling(modelName) {
+  if (!modelName) return false
+  return /qwen\s*3.*next/i.test(modelName) || /qwen\s*3\.5/i.test(modelName)
+}
+
+// Calculate context overhead based on context size and model family.
+function calculateContextOverhead(modelName = '') {
+  if (hasLinearContextScaling(modelName)) {
+    // Linear scaling target requested by user:
+    // 32k -> 1GB, 64k -> 2GB, 128k -> 4GB
+    return contextSize.value / (32 * 1024)
+  }
+
+  // Normal scaling baseline: start at 4K = 0.25GB overhead
   const baseContext = 4096
   const baseOverhead = 0.25
   
@@ -302,7 +308,7 @@ const modelSizeGB = computed(() => {
     recommendedModel.value.model
   ) * 1.024 // extra padding for 1000 vs 1024 based...
 })
-const contextSizeGB = computed(() => calculateContextOverhead()) // Fixed: Always calculate based 
+const contextSizeGB = computed(() => calculateContextOverhead(recommendedModel.value.model))
 
 </script>
 
