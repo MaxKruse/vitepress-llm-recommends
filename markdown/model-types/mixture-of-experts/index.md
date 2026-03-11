@@ -61,18 +61,13 @@ This "optimal" number is determined by testing the model's **perplexity (PPL)**,
 
 ### Finding the optimal GPU layers
 
-You don't need to find them manually. The `llama.cpp` tool added a flag, `-cpu-moe`, to handle this.
+You don't need to find them manually. The `llama.cpp` tool added a flag, `--fit on`, to handle this.
 
-The simple method is to:
-1.  Load as many GPU layers as you can with the `-ngl` flag.
-2.  Use the `-n-cpu-moe <N>` flag and adjust `<N>` until the model loads and runs.
+Simply run llama-server with the flag, e.g.
 
-For a more technical approach, you can calculate `<N>` for the flag `-n-cpu-moe <Layer Count - N>`:
-1.  Find the model's total layers and the size per layer (e.g., 36GB file / 48 layers = 0.75GB per layer).
-2.  Find your available VRAM (e.g., Total VRAM - VRAM already in use).
-3.  Calculate `N` = `Available VRAM in GB` / `SizePerLayer`
-4.  Example for a 12GB card with 4GB in use: (12 - 4) / 0.75 ≈ 11.
-5.  Your flag would be `-n-cpu-moe <48 - 11>`, so `-n-cpu-moe 37`.
+> llama-server -m "C:/Models/Qwen3.5-9B-Q4_K_M.gguf" --fit on -c 4096
+
+And it will automatically try (at least on single-GPU setups) to find the optimal load parameters for your hardware, and optimized for speed. By default it does take into account a 1GB VRAM buffer for your OS and other processes, which you can adjust by using `--fit-target <Number in MB>`.
 
 ### Speed Differences Between Quantizations
 
