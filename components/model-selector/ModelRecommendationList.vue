@@ -34,7 +34,7 @@ const props = defineProps<{
               <th>Modelname (B params)</th>
               <th>Quant</th>
               <th>Usages</th>
-              <th>Open</th>
+              <th>LMStudio</th>
             </tr>
           </thead>
           <tbody>
@@ -74,7 +74,7 @@ const props = defineProps<{
                   :href="getLmStudioUri(item.name) ?? undefined"
                   :class="$style.button"
                 >
-                  Open
+                  LMStudio
                 </a>
                 <span v-else :class="$style.muted">—</span>
               </td>

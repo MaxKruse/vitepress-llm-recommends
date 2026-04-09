@@ -3,8 +3,9 @@ import { describe, expect, it } from "bun:test";
 import { MODEL_NAMES as M } from "./constants/models";
 import { QUANTIZATIONS as Q } from "./constants/quantizations";
 import { RECOMMENDED_USAGE as U } from "./constants/usage";
+import { DEFAULT_RECOMMENDATION_RULES } from "./recommendations";
 import type { RecommendationRule } from "./types";
-import { getMatchingRecommendations } from "./utils";
+import { getLmStudioUri, getMatchingRecommendations } from "./utils";
 
 describe("getMatchingRecommendations", () => {
   it("derives parameter size from the model name and prefers the largest matching quantization for duplicate entries", () => {
@@ -38,5 +39,17 @@ describe("getMatchingRecommendations", () => {
     expect(recommendation?.parameters).toBe(30);
     expect(recommendation?.quantization).toBe(Q.Q8_K_XL);
     expect(recommendation?.usage).toBe(U.CODING | U.INSTRUCT);
+  });
+
+  it("provides an LM Studio link for every recommended model", () => {
+    const recommendedModelNames = new Set(
+      DEFAULT_RECOMMENDATION_RULES.flatMap((rule) =>
+        rule.models.map((candidate) => candidate.name),
+      ),
+    );
+
+    for (const modelName of recommendedModelNames) {
+      expect(getLmStudioUri(modelName)).not.toBeNull();
+    }
   });
 });

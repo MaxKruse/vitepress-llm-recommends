@@ -58,6 +58,14 @@ export const MODEL_TO_HF_MAPPING: Partial<Record<ModelName, string>> = {
   [MODEL_NAMES.QWEN3_CODER_30B_A3B_INSTRUCT]:
     "unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF",
   [MODEL_NAMES.QWEN3_CODER_NEXT]: "unsloth/Qwen3-Coder-Next-GGUF",
+  [MODEL_NAMES.QWEN3_35B_A3B]: "unsloth/Qwen3-30B-A3B-GGUF",
+  [MODEL_NAMES.QWEN3_5_9B]: "unsloth/Qwen3.5-9B-GGUF",
+  [MODEL_NAMES.QWEN3_5_35B_A3B]: "unsloth/Qwen3.5-35B-A3B-GGUF",
+  [MODEL_NAMES.QWEN3_5_122B_A10B]: "unsloth/Qwen3.5-122B-A10B-GGUF",
+  [MODEL_NAMES.QWEN3_VL_8B_INSTRUCT]: "unsloth/Qwen3-VL-8B-Instruct-GGUF",
+  [MODEL_NAMES.QWEN3_VL_32B_INSTRUCT]: "unsloth/Qwen3-VL-32B-Instruct-GGUF",
+  [MODEL_NAMES.QWEN3_VL_235B_INSTRUCT]:
+    "unsloth/Qwen3-VL-235B-A22B-Instruct-GGUF",
   [MODEL_NAMES.MISTRAL_SMALL_3_2]:
     "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF",
   [MODEL_NAMES.GPT_OSS_20B]: "openai/gpt-oss-20b",
