@@ -8,13 +8,13 @@ import ModelSelector from '../../components/ModelSelector.vue'
 
 # Recommendations
 
-This overview is now the **source of truth** for hardware-based model picks. Enter your RAM and VRAM below to get a neatly formatted list of models, their recommended usage tags, and direct links to the explanation pages.
+Use the selector below to find hardware-based model picks. Enter your RAM and VRAM to see recommended models, their usage tags, and links to the explanation pages.
 
 <ModelSelector />
 
 ## Use-case guides
 
-Each guide below now focuses on the **why** behind the recommendation. The live selector stays here on the overview page.
+Each guide below explains the reasoning behind the recommendation for a specific use case.
 
 - [**Coding Assistants**](./coding/)  
   Models and hardware for code generation, autocomplete, and debugging.
