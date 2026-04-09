@@ -34,7 +34,7 @@ const props = defineProps<{
               <th>Modelname (B params)</th>
               <th>Quant</th>
               <th>Usages</th>
-              <th>LMStudio</th>
+              <th>Open in LMStudio</th>
             </tr>
           </thead>
           <tbody>

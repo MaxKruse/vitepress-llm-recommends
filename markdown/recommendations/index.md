@@ -10,8 +10,6 @@ import ModelSelector from '../../components/ModelSelector.vue'
 
 Use the selector below to find hardware-based model picks. Enter your RAM and VRAM to see recommended models, their usage tags, and links to the explanation pages.
 
-Note: All recommendations are based on the recommended inference settings, and maximum possible usability *in chat scenarios*. This does not cover agentic usecases.
-
 ## Assumptions
 
 For all models, the following assumptions are made:
@@ -19,6 +17,7 @@ For all models, the following assumptions are made:
 - **OS**: Windows 10/11, meaning 1GB VRAM overhead + 6/8/12GB RAM overhead for the system (16/32/6GB total RAM).
 - **Inference Settings**: Recommended as per the model developers, with **no** KV-Cache quantization.
 - **Context Size**: 32K Tokens. Enough to get small things done, and on most modern models not prohibitively large.
+- **Usage**: Chat-only. No agentic usecases.
 
 <ModelSelector />
 

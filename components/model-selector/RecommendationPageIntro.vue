@@ -13,6 +13,9 @@ const details = computed(() => USE_CASE_COPY[props.usageKey])
   <aside :class="$style.card">
     <p :class="$style.title">{{ details.title }}</p>
     <p :class="$style.summary">{{ details.summary }}</p>
+    <p :class="$style.disclaimer">
+      Warning: these model recommendations are personal opinion, reflecting individual preferences and tradeoffs rather than a universal ranking.
+    </p>
   </aside>
 </template>
 
@@ -35,5 +38,13 @@ const details = computed(() => USE_CASE_COPY[props.usageKey])
 .summary {
   margin: 0;
   color: var(--vp-c-text-2);
+}
+
+.disclaimer {
+  margin: 0.9rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--vp-c-border);
+  color: var(--vp-c-text-2);
+  font-size: 0.92rem;
 }
 </style>
