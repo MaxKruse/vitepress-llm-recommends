@@ -2,9 +2,19 @@
 title: Recommendations
 ---
 
+<script setup>
+import ModelSelector from '../../components/ModelSelector.vue'
+</script>
+
 # Recommendations
 
-Choose the right model and hardware setup based on your specific use case. Below are tailored guides for common scenarios:
+This overview is now the **source of truth** for hardware-based model picks. Enter your RAM and VRAM below to get a neatly formatted list of models, their recommended usage tags, and direct links to the explanation pages.
+
+<ModelSelector />
+
+## Use-case guides
+
+Each guide below now focuses on the **why** behind the recommendation. The live selector stays here on the overview page.
 
 - [**Coding Assistants**](./coding/)  
   Models and hardware for code generation, autocomplete, and debugging.
@@ -23,8 +33,6 @@ Choose the right model and hardware setup based on your specific use case. Below
   
 - [**Vision Tasks**](./vision/)  
   Models with superior visual understanding for image analysis.
-
-Each guide includes model suggestions, quantization tips, and minimum/recommended hardware specs.
 
 ## Parameters, Quantization, and Hallucinations
 

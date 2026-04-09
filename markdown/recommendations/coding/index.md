@@ -2,28 +2,16 @@
 title: Coding
 ---
 
+<script setup>
+import RecommendationPageIntro from '../../../components/model-selector/RecommendationPageIntro.vue'
+</script>
+
 # Coding Recommendations  
 **Prioritizing Very High Precision in Code Generation and Debugging**
 
 When working with AI-assisted coding, **precision is non-negotiable**. Even minor hallucinations, syntactic errors, or incorrect logic can introduce bugs, security vulnerabilities, or maintenance debt. These recommendations are tailored for developers who require **extremely high-fidelity outputs**—not just plausible-looking code, but **correct, production-ready, and logically sound** implementations.
 
-Use the selector below to identify the best model for a given hardware configuration:
-
-<script setup>
-import ModelSelector from '../../../components/ModelSelector.vue'
-
-const models = [
-      { ramMin: 64, vramMin: 16, models: [{"Qwen3 Coder Next": { parameters: 80, quantization: 'Q4_K_M' }}, {"GLM 4.7 Flash": { parameters: 30, quantization: 'Q8_K_XL' }}, ], usefulness: 1.0},
-      { ramMin: 64, vramMin: 12, models: [{"Qwen3 Coder Next": { parameters: 80, quantization: 'Q4_K_M' }}, {"GLM 4.7 Flash": { parameters: 30, quantization: 'Q8_K_XL' }}, ], usefulness: 0.9},
-      { ramMin: 32, vramMin: 16, models: [{"GLM 4.7 Flash": { parameters: 30, quantization: 'Q6_K_XL' }}], usefulness: 0.8},
-      { ramMin: 32, vramMin: 6, models: [{"GLM 4.7 Flash": { parameters: 30, quantization: 'Q4_K_XL' }}], usefulness: 0.7},
-      { ramMin: 16, vramMin: 4, models: [{"Qwen3 4B Instruct 2507": { parameters: 4, quantization: 'F16' }}], usefulness: 0.3},
-      { ramMin: 16, vramMin: 0, models: [{"Qwen3 4B Instruct 2507": { parameters: 4, quantization: 'Q4_K_XL' }}], usefulness: 0},
-    ]
-
-</script>
-
-<ModelSelector :modelDefinitions="models" :contextSize="1024*32" />
+<RecommendationPageIntro usageKey="coding" />
 
 # Prompting
 

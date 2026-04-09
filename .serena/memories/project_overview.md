@@ -1,0 +1,5 @@
+- Purpose: VitePress site for recommending local LLMs by RAM/VRAM and use case.
+- Stack: Bun, TypeScript, Vue SFCs, VitePress.
+- Main UI: `components/ModelSelector.vue` wraps reusable selector components under `components/model-selector/`.
+- Recommendation data source: `components/model-selector/recommendations.ts` with shared constants in `components/model-selector/constants/`.
+- Docs content lives in `markdown/`, generated site output in `docs/`.

@@ -1,0 +1,4 @@
+- For recommendation logic changes, add or update a focused `bun test` regression test first.
+- Re-run the affected Bun test(s) after edits and confirm pass counts.
+- If not skipped by the user, verify the site with `bun run docs:build` or `bun run docs:dev`.
+- Avoid running lint unless explicitly requested by the user.

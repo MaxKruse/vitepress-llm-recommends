@@ -1,0 +1,4 @@
+- Prefer `lang="ts"` Vue SFCs with typed `defineProps`/`withDefaults`.
+- Keep `ModelSelector.vue` thin; shared logic belongs in `components/model-selector/utils.ts` and data in `recommendations.ts`.
+- Use named constants/enums for model names, quantizations, and usage flags.
+- Keep UI copy concise and route-specific pages fed by shared recommendation data.

@@ -1,0 +1,6 @@
+- Install deps: `bun install`
+- Start docs locally: `bun run docs:dev`
+- Production build: `bun run docs:build`
+- Preview built docs: `bun run docs:preview`
+- Run a focused Bun test: `bun test components/model-selector/utils.test.ts`
+- On Windows shell use PowerShell commands like `Get-ChildItem`, `Get-Location`, `Select-String`.
