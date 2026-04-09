@@ -1,4 +1,4 @@
-import { MODEL_TO_HF_MAPPING } from "./constants/models";
+import { MODEL_TO_HF_MAPPING, getModelParameterSize } from "./constants/models";
 import type {
   AggregatedRecommendation,
   ModelCandidate,
@@ -63,42 +63,18 @@ export function calculateFileSizeGb(
   return baseSize + getVisionAdapterSize(modelName);
 }
 
-export function getUsefulnessColor(usefulness: number): string {
-  if (usefulness >= 0.9) {
-    return "var(--vp-c-green-2)";
-  }
-
-  if (usefulness >= 0.7) {
-    return "var(--vp-c-yellow-2)";
-  }
-
-  if (usefulness >= 0.4) {
-    return "var(--vp-c-orange-2)";
-  }
-
-  return "var(--vp-c-red-2)";
-}
-
-export function getUsefulnessLabel(usefulness: number): string {
-  if (usefulness >= 0.9) {
-    return "Excellent fit";
-  }
-
-  if (usefulness >= 0.7) {
-    return "Strong fit";
-  }
-
-  if (usefulness >= 0.4) {
-    return "Workable fit";
-  }
-
-  return "Fallback only";
+function resolveModelCandidate(
+  model: ModelCandidate,
+): AggregatedRecommendation {
+  return {
+    ...model,
+    parameters: model.parameters ?? getModelParameterSize(model.name),
+  };
 }
 
 function shouldReplaceExisting(
-  current: ModelCandidate & { usefulness: number },
-  next: ModelCandidate,
-  usefulness: number,
+  current: AggregatedRecommendation,
+  next: AggregatedRecommendation,
 ): boolean {
   const currentQuantizationLevel = getQuantizationLevel(current.quantization);
   const nextQuantizationLevel = getQuantizationLevel(next.quantization);
@@ -107,7 +83,7 @@ function shouldReplaceExisting(
     return nextQuantizationLevel > currentQuantizationLevel;
   }
 
-  return usefulness > current.usefulness;
+  return next.parameters > current.parameters;
 }
 
 export function getMatchingRecommendations(
@@ -122,38 +98,39 @@ export function getMatchingRecommendations(
       continue;
     }
 
-    for (const model of rule.models) {
+    for (const candidate of rule.models) {
+      const model = resolveModelCandidate(candidate);
       const existing = aggregated.get(model.name);
 
       if (!existing) {
-        aggregated.set(model.name, { ...model, usefulness: rule.usefulness });
+        aggregated.set(model.name, model);
         continue;
       }
 
       const mergedUsage = existing.usage | model.usage;
-      const bestUsefulness = Math.max(existing.usefulness, rule.usefulness);
 
-      if (shouldReplaceExisting(existing, model, rule.usefulness)) {
+      if (shouldReplaceExisting(existing, model)) {
         aggregated.set(model.name, {
           ...model,
           usage: mergedUsage,
-          usefulness: bestUsefulness,
         });
         continue;
       }
 
       existing.usage = mergedUsage;
-      existing.usefulness = bestUsefulness;
     }
   }
 
   return [...aggregated.values()].sort((left, right) => {
-    if (right.usefulness !== left.usefulness) {
-      return right.usefulness - left.usefulness;
-    }
-
     if (right.parameters !== left.parameters) {
       return right.parameters - left.parameters;
+    }
+
+    const rightQuantizationLevel = getQuantizationLevel(right.quantization);
+    const leftQuantizationLevel = getQuantizationLevel(left.quantization);
+
+    if (rightQuantizationLevel !== leftQuantizationLevel) {
+      return rightQuantizationLevel - leftQuantizationLevel;
     }
 
     return left.name.localeCompare(right.name);

@@ -1,7 +1,17 @@
 import { MODEL_NAMES as M } from "./constants/models";
 import { QUANTIZATIONS as Q } from "./constants/quantizations";
 import { RECOMMENDED_USAGE as U } from "./constants/usage";
-import type { RecommendationRule } from "./types";
+import type { ModelCandidate, RecommendationRule } from "./types";
+
+const model = (
+  name: ModelCandidate["name"],
+  quantization: ModelCandidate["quantization"],
+  usage: ModelCandidate["usage"],
+): ModelCandidate => ({
+  name,
+  quantization,
+  usage,
+});
 
 export const USE_CASE_COPY = {
   coding: {
@@ -46,91 +56,45 @@ export const DEFAULT_RECOMMENDATION_RULES: RecommendationRule[] = [
   {
     ramMin: 64,
     vramMin: 16,
-    usefulness: 1.0,
     models: [
-      {
-        name: M.QWEN3_CODER_NEXT,
-        parameters: 80,
-        quantization: Q.Q4_K_M,
-        usage: U.CODING,
-      },
-      {
-        name: M.GLM_4_7_FLASH,
-        parameters: 30,
-        quantization: Q.Q8_K_XL,
-        usage: U.CODING,
-      },
+      model(M.QWEN3_CODER_NEXT, Q.Q4_K_M, U.CODING),
+      model(M.GLM_4_7_FLASH, Q.Q8_K_XL, U.CODING),
     ],
   },
   {
     ramMin: 64,
     vramMin: 12,
-    usefulness: 0.9,
     models: [
-      {
-        name: M.QWEN3_CODER_NEXT,
-        parameters: 80,
-        quantization: Q.Q4_K_M,
-        usage: U.CODING,
-      },
-      {
-        name: M.GLM_4_7_FLASH,
-        parameters: 30,
-        quantization: Q.Q8_K_XL,
-        usage: U.CODING,
-      },
+      model(M.QWEN3_CODER_NEXT, Q.Q4_K_M, U.CODING),
+      model(M.GLM_4_7_FLASH, Q.Q8_K_XL, U.CODING),
     ],
   },
   {
     ramMin: 32,
     vramMin: 16,
-    usefulness: 0.8,
     models: [
-      {
-        name: M.GLM_4_7_FLASH,
-        parameters: 30,
-        quantization: Q.Q6_K_XL,
-        usage: U.CODING,
-      },
+      model(M.GLM_4_7_FLASH, Q.Q6_K_XL, U.CODING),
     ],
   },
   {
     ramMin: 32,
     vramMin: 6,
-    usefulness: 0.7,
     models: [
-      {
-        name: M.GLM_4_7_FLASH,
-        parameters: 30,
-        quantization: Q.Q4_K_XL,
-        usage: U.CODING,
-      },
+      model(M.GLM_4_7_FLASH, Q.Q4_K_XL, U.CODING),
     ],
   },
   {
     ramMin: 16,
     vramMin: 4,
-    usefulness: 0.3,
     models: [
-      {
-        name: M.QWEN3_4B_INSTRUCT_2507,
-        parameters: 4,
-        quantization: Q.F16,
-        usage: U.CODING,
-      },
+      model(M.QWEN3_4B_INSTRUCT_2507, Q.F16, U.CODING),
     ],
   },
   {
     ramMin: 16,
     vramMin: 0,
-    usefulness: 0.0,
     models: [
-      {
-        name: M.QWEN3_4B_INSTRUCT_2507,
-        parameters: 4,
-        quantization: Q.Q4_K_XL,
-        usage: U.CODING,
-      },
+      model(M.QWEN3_4B_INSTRUCT_2507, Q.Q4_K_XL, U.CODING),
     ],
   },
 
@@ -138,220 +102,110 @@ export const DEFAULT_RECOMMENDATION_RULES: RecommendationRule[] = [
   {
     ramMin: 128,
     vramMin: 32,
-    usefulness: 1.0,
     models: [
-      {
-        name: M.MISTRAL_SMALL_3_2,
-        parameters: 24,
-        quantization: Q.Q8_K_XL,
-        usage: U.INSTRUCT,
-      },
-      {
-        name: M.QWEN3_30B_INSTRUCT_2507,
-        parameters: 30,
-        quantization: Q.BF16,
-        usage: U.INSTRUCT,
-      },
+      model(M.MISTRAL_SMALL_3_2, Q.Q8_K_XL, U.INSTRUCT),
+      model(M.QWEN3_30B_INSTRUCT_2507, Q.BF16, U.INSTRUCT),
     ],
   },
   {
     ramMin: 128,
     vramMin: 24,
-    usefulness: 0.9,
     models: [
-      {
-        name: M.MISTRAL_SMALL_3_2,
-        parameters: 24,
-        quantization: Q.Q6_K_XL,
-        usage: U.INSTRUCT,
-      },
-      {
-        name: M.QWEN3_30B_INSTRUCT_2507,
-        parameters: 30,
-        quantization: Q.BF16,
-        usage: U.INSTRUCT,
-      },
+      model(M.MISTRAL_SMALL_3_2, Q.Q6_K_XL, U.INSTRUCT),
+      model(M.QWEN3_30B_INSTRUCT_2507, Q.BF16, U.INSTRUCT),
     ],
   },
   {
     ramMin: 128,
     vramMin: 0,
-    usefulness: 0.8,
     models: [
-      {
-        name: M.QWEN3_30B_INSTRUCT_2507,
-        parameters: 30,
-        quantization: Q.BF16,
-        usage: U.INSTRUCT,
-      },
+      model(M.QWEN3_30B_INSTRUCT_2507, Q.BF16, U.INSTRUCT),
     ],
   },
   {
     ramMin: 64,
     vramMin: 32,
-    usefulness: 0.9,
     models: [
-      {
-        name: M.MISTRAL_SMALL_3_2,
-        parameters: 24,
-        quantization: Q.Q8_K_XL,
-        usage: U.INSTRUCT,
-      },
-      {
-        name: M.QWEN3_30B_INSTRUCT_2507,
-        parameters: 30,
-        quantization: Q.BF16,
-        usage: U.INSTRUCT,
-      },
+      model(M.MISTRAL_SMALL_3_2, Q.Q8_K_XL, U.INSTRUCT),
+      model(M.QWEN3_30B_INSTRUCT_2507, Q.BF16, U.INSTRUCT),
     ],
   },
   {
     ramMin: 64,
     vramMin: 24,
-    usefulness: 0.8,
     models: [
-      {
-        name: M.MISTRAL_SMALL_3_2,
-        parameters: 24,
-        quantization: Q.Q6_K_XL,
-        usage: U.INSTRUCT,
-      },
-      {
-        name: M.QWEN3_30B_INSTRUCT_2507,
-        parameters: 30,
-        quantization: Q.Q8_K_XL,
-        usage: U.INSTRUCT,
-      },
+      model(M.MISTRAL_SMALL_3_2, Q.Q6_K_XL, U.INSTRUCT),
+      model(M.QWEN3_30B_INSTRUCT_2507, Q.Q8_K_XL, U.INSTRUCT),
     ],
   },
   {
     ramMin: 64,
     vramMin: 0,
-    usefulness: 0.2,
     models: [
-      {
-        name: M.QWEN3_30B_INSTRUCT_2507,
-        parameters: 30,
-        quantization: Q.Q8_K_XL,
-        usage: U.INSTRUCT,
-      },
+      model(M.QWEN3_30B_INSTRUCT_2507, Q.Q8_K_XL, U.INSTRUCT),
     ],
   },
   {
     ramMin: 32,
     vramMin: 32,
-    usefulness: 0.8,
     models: [
-      {
-        name: M.MISTRAL_SMALL_3_2,
-        parameters: 24,
-        quantization: Q.Q8_K_XL,
-        usage: U.INSTRUCT,
-      },
+      model(M.MISTRAL_SMALL_3_2, Q.Q8_K_XL, U.INSTRUCT),
     ],
   },
   {
     ramMin: 32,
     vramMin: 24,
-    usefulness: 0.7,
     models: [
-      {
-        name: M.MISTRAL_SMALL_3_2,
-        parameters: 24,
-        quantization: Q.Q6_K_XL,
-        usage: U.INSTRUCT,
-      },
+      model(M.MISTRAL_SMALL_3_2, Q.Q6_K_XL, U.INSTRUCT),
     ],
   },
   {
     ramMin: 32,
     vramMin: 16,
-    usefulness: 0.6,
     models: [
-      {
-        name: M.MISTRAL_SMALL_3_2,
-        parameters: 24,
-        quantization: Q.Q4_K_XL,
-        usage: U.INSTRUCT,
-      },
+      model(M.MISTRAL_SMALL_3_2, Q.Q4_K_XL, U.INSTRUCT),
     ],
   },
   {
     ramMin: 32,
     vramMin: 8,
-    usefulness: 0.4,
     models: [
-      {
-        name: M.QWEN3_30B_INSTRUCT_2507,
-        parameters: 30,
-        quantization: Q.Q6_K_XL,
-        usage: U.INSTRUCT,
-      },
+      model(M.QWEN3_30B_INSTRUCT_2507, Q.Q6_K_XL, U.INSTRUCT),
     ],
   },
   {
     ramMin: 32,
     vramMin: 4,
-    usefulness: 0.3,
     models: [
-      {
-        name: M.QWEN3_4B_INSTRUCT_2507,
-        parameters: 4,
-        quantization: Q.BF16,
-        usage: U.INSTRUCT,
-      },
+      model(M.QWEN3_4B_INSTRUCT_2507, Q.BF16, U.INSTRUCT),
     ],
   },
   {
     ramMin: 16,
     vramMin: 32,
-    usefulness: 0.6,
     models: [
-      {
-        name: M.MISTRAL_SMALL_3_2,
-        parameters: 24,
-        quantization: Q.Q8_K_XL,
-        usage: U.INSTRUCT,
-      },
+      model(M.MISTRAL_SMALL_3_2, Q.Q8_K_XL, U.INSTRUCT),
     ],
   },
   {
     ramMin: 16,
     vramMin: 24,
-    usefulness: 0.5,
     models: [
-      {
-        name: M.MISTRAL_SMALL_3_2,
-        parameters: 24,
-        quantization: Q.Q6_K_XL,
-        usage: U.INSTRUCT,
-      },
+      model(M.MISTRAL_SMALL_3_2, Q.Q6_K_XL, U.INSTRUCT),
     ],
   },
   {
     ramMin: 16,
     vramMin: 12,
-    usefulness: 0.3,
     models: [
-      {
-        name: M.QWEN3_4B_INSTRUCT_2507,
-        parameters: 4,
-        quantization: Q.BF16,
-        usage: U.INSTRUCT,
-      },
+      model(M.QWEN3_4B_INSTRUCT_2507, Q.BF16, U.INSTRUCT),
     ],
   },
   {
     ramMin: 16,
     vramMin: 4,
-    usefulness: 0.2,
     models: [
-      {
-        name: M.QWEN3_4B_INSTRUCT_2507,
-        parameters: 4,
-        quantization: Q.Q4_K_XL,
-        usage: U.INSTRUCT,
-      },
+      model(M.QWEN3_4B_INSTRUCT_2507, Q.Q4_K_XL, U.INSTRUCT),
     ],
   },
 
@@ -359,104 +213,52 @@ export const DEFAULT_RECOMMENDATION_RULES: RecommendationRule[] = [
   {
     ramMin: 128,
     vramMin: 6,
-    usefulness: 1.0,
     models: [
-      {
-        name: M.QWEN3_5_122B_A10B,
-        parameters: 122,
-        quantization: Q.Q4_K_M,
-        usage: U.PERSONAL_ASSISTANT,
-      },
-      {
-        name: M.GPT_OSS_120B,
-        parameters: 120,
-        quantization: Q.MXFP4,
-        usage: U.PERSONAL_ASSISTANT,
-      },
+      model(M.QWEN3_5_122B_A10B, Q.Q4_K_M, U.PERSONAL_ASSISTANT),
+      model(M.GPT_OSS_120B, Q.MXFP4, U.PERSONAL_ASSISTANT),
     ],
   },
   {
     ramMin: 64,
     vramMin: 6,
-    usefulness: 0.8,
     models: [
-      {
-        name: M.GPT_OSS_20B,
-        parameters: 20,
-        quantization: Q.MXFP4,
-        usage: U.PERSONAL_ASSISTANT,
-      },
-      {
-        name: M.QWEN3_35B_A3B,
-        parameters: 35,
-        quantization: Q.Q8_0,
-        usage: U.PERSONAL_ASSISTANT,
-      },
+      model(M.GPT_OSS_20B, Q.MXFP4, U.PERSONAL_ASSISTANT),
+      model(M.QWEN3_35B_A3B, Q.Q8_0, U.PERSONAL_ASSISTANT),
     ],
   },
   {
     ramMin: 64,
     vramMin: 0,
-    usefulness: 0.6,
     models: [
-      {
-        name: M.GPT_OSS_20B,
-        parameters: 20,
-        quantization: Q.MXFP4,
-        usage: U.PERSONAL_ASSISTANT,
-      },
+      model(M.GPT_OSS_20B, Q.MXFP4, U.PERSONAL_ASSISTANT),
     ],
   },
   {
     ramMin: 32,
     vramMin: 0,
-    usefulness: 0.6,
     models: [
-      {
-        name: M.GPT_OSS_20B,
-        parameters: 20,
-        quantization: Q.MXFP4,
-        usage: U.PERSONAL_ASSISTANT,
-      },
+      model(M.GPT_OSS_20B, Q.MXFP4, U.PERSONAL_ASSISTANT),
     ],
   },
   {
     ramMin: 16,
     vramMin: 12,
-    usefulness: 0.4,
     models: [
-      {
-        name: M.GPT_OSS_20B,
-        parameters: 20,
-        quantization: Q.MXFP4,
-        usage: U.PERSONAL_ASSISTANT,
-      },
+      model(M.GPT_OSS_20B, Q.MXFP4, U.PERSONAL_ASSISTANT),
     ],
   },
   {
     ramMin: 16,
     vramMin: 8,
-    usefulness: 0.3,
     models: [
-      {
-        name: M.GEMMA_3_12B,
-        parameters: 12,
-        quantization: Q.Q4_K_XL,
-        usage: U.PERSONAL_ASSISTANT,
-      },
+      model(M.GEMMA_3_12B, Q.Q4_K_XL, U.PERSONAL_ASSISTANT),
     ],
   },
   {
     ramMin: 16,
     vramMin: 4,
-    usefulness: 0.2,
     models: [
-      {
-        name: M.QWEN3_4B_INSTRUCT_2507,
-        parameters: 4,
-        quantization: Q.Q4_K_XL,
-        usage: U.PERSONAL_ASSISTANT,
-      },
+      model(M.QWEN3_4B_INSTRUCT_2507, Q.Q4_K_XL, U.PERSONAL_ASSISTANT),
     ],
   },
 
@@ -464,131 +266,71 @@ export const DEFAULT_RECOMMENDATION_RULES: RecommendationRule[] = [
   {
     ramMin: 128,
     vramMin: 0,
-    usefulness: 1.0,
     models: [
-      {
-        name: M.QWEN3_5_122B_A10B,
-        parameters: 122,
-        quantization: Q.Q8_K_XL,
-        usage: U.STEM,
-      },
+      model(M.QWEN3_5_122B_A10B, Q.Q8_K_XL, U.STEM),
     ],
   },
   {
     ramMin: 64,
     vramMin: 32,
-    usefulness: 0.8,
     models: [
-      {
-        name: M.QWEN3_5_35B_A3B,
-        parameters: 35,
-        quantization: Q.Q8_K_XL,
-        usage: U.STEM,
-      },
+      model(M.QWEN3_5_35B_A3B, Q.Q8_K_XL, U.STEM),
     ],
   },
   {
     ramMin: 64,
     vramMin: 12,
-    usefulness: 0.6,
     models: [
-      {
-        name: M.QWEN3_5_35B_A3B,
-        parameters: 35,
-        quantization: Q.Q8_K_XL,
-        usage: U.STEM,
-      },
+      model(M.QWEN3_5_35B_A3B, Q.Q8_K_XL, U.STEM),
     ],
   },
   {
     ramMin: 64,
     vramMin: 0,
-    usefulness: 0.6,
     models: [
-      {
-        name: M.QWEN3_5_35B_A3B,
-        parameters: 35,
-        quantization: Q.Q6_K_XL,
-        usage: U.STEM,
-      },
+      model(M.QWEN3_5_35B_A3B, Q.Q6_K_XL, U.STEM),
     ],
   },
   {
     ramMin: 32,
     vramMin: 24,
-    usefulness: 0.8,
     models: [
-      {
-        name: M.QWEN3_5_35B_A3B,
-        parameters: 35,
-        quantization: Q.Q8_K_XL,
-        usage: U.STEM,
-      },
+      model(M.QWEN3_5_35B_A3B, Q.Q8_K_XL, U.STEM),
     ],
   },
   {
     ramMin: 32,
     vramMin: 12,
-    usefulness: 0.5,
     models: [
-      {
-        name: M.QWEN3_4B_THINKING_2507,
-        parameters: 4,
-        quantization: Q.BF16,
-        usage: U.STEM,
-      },
+      model(M.QWEN3_4B_THINKING_2507, Q.BF16, U.STEM),
     ],
   },
   {
     ramMin: 32,
     vramMin: 8,
-    usefulness: 0.4,
     models: [
-      {
-        name: M.QWEN3_4B_THINKING_2507,
-        parameters: 4,
-        quantization: Q.Q8_K_XL,
-        usage: U.STEM,
-      },
+      model(M.QWEN3_4B_THINKING_2507, Q.Q8_K_XL, U.STEM),
     ],
   },
   {
     ramMin: 16,
     vramMin: 12,
-    usefulness: 0.4,
     models: [
-      {
-        name: M.QWEN3_4B_THINKING_2507,
-        parameters: 4,
-        quantization: Q.BF16,
-        usage: U.STEM,
-      },
+      model(M.QWEN3_4B_THINKING_2507, Q.BF16, U.STEM),
     ],
   },
   {
     ramMin: 16,
     vramMin: 8,
-    usefulness: 0.3,
     models: [
-      {
-        name: M.QWEN3_4B_THINKING_2507,
-        parameters: 4,
-        quantization: Q.Q8_K_XL,
-        usage: U.STEM,
-      },
+      model(M.QWEN3_4B_THINKING_2507, Q.Q8_K_XL, U.STEM),
     ],
   },
   {
     ramMin: 16,
     vramMin: 4,
-    usefulness: 0.2,
     models: [
-      {
-        name: M.QWEN3_4B_THINKING_2507,
-        parameters: 4,
-        quantization: Q.Q4_K_XL,
-        usage: U.STEM,
-      },
+      model(M.QWEN3_4B_THINKING_2507, Q.Q4_K_XL, U.STEM),
     ],
   },
 
@@ -596,53 +338,29 @@ export const DEFAULT_RECOMMENDATION_RULES: RecommendationRule[] = [
   {
     ramMin: 128,
     vramMin: 32,
-    usefulness: 1.0,
     models: [
-      {
-        name: M.GLM_4_7_FLASH,
-        parameters: 30,
-        quantization: Q.Q8_K_XL,
-        usage: U.STORYWRITING,
-      },
+      model(M.GLM_4_7_FLASH, Q.Q8_K_XL, U.STORYWRITING),
     ],
   },
   {
     ramMin: 128,
     vramMin: 12,
-    usefulness: 0.8,
     models: [
-      {
-        name: M.GLM_4_7_FLASH,
-        parameters: 30,
-        quantization: Q.Q8_K_XL,
-        usage: U.STORYWRITING,
-      },
+      model(M.GLM_4_7_FLASH, Q.Q8_K_XL, U.STORYWRITING),
     ],
   },
   {
     ramMin: 64,
     vramMin: 6,
-    usefulness: 0.7,
     models: [
-      {
-        name: M.GLM_4_7_FLASH,
-        parameters: 30,
-        quantization: Q.Q8_K_XL,
-        usage: U.STORYWRITING,
-      },
+      model(M.GLM_4_7_FLASH, Q.Q8_K_XL, U.STORYWRITING),
     ],
   },
   {
     ramMin: 32,
     vramMin: 12,
-    usefulness: 0.6,
     models: [
-      {
-        name: M.GLM_4_7_FLASH,
-        parameters: 30,
-        quantization: Q.Q4_K_XL,
-        usage: U.STORYWRITING,
-      },
+      model(M.GLM_4_7_FLASH, Q.Q4_K_XL, U.STORYWRITING),
     ],
   },
 
@@ -650,53 +368,29 @@ export const DEFAULT_RECOMMENDATION_RULES: RecommendationRule[] = [
   {
     ramMin: 128,
     vramMin: 32,
-    usefulness: 0.95,
     models: [
-      {
-        name: M.QWEN3_VL_235B_INSTRUCT,
-        parameters: 235,
-        quantization: Q.Q3_K_XL,
-        usage: U.VISION,
-      },
+      model(M.QWEN3_VL_235B_INSTRUCT, Q.Q3_K_XL, U.VISION),
     ],
   },
   {
     ramMin: 64,
     vramMin: 32,
-    usefulness: 0.85,
     models: [
-      {
-        name: M.QWEN3_VL_32B_INSTRUCT,
-        parameters: 32,
-        quantization: Q.Q6_K_XL,
-        usage: U.VISION,
-      },
+      model(M.QWEN3_VL_32B_INSTRUCT, Q.Q6_K_XL, U.VISION),
     ],
   },
   {
     ramMin: 64,
     vramMin: 16,
-    usefulness: 0.85,
     models: [
-      {
-        name: M.QWEN3_5_9B,
-        parameters: 9,
-        quantization: Q.Q8_K_XL,
-        usage: U.VISION,
-      },
+      model(M.QWEN3_5_9B, Q.Q8_K_XL, U.VISION),
     ],
   },
   {
     ramMin: 32,
     vramMin: 12,
-    usefulness: 0.8,
     models: [
-      {
-        name: M.QWEN3_VL_8B_INSTRUCT,
-        parameters: 8,
-        quantization: Q.Q8_K_XL,
-        usage: U.VISION,
-      },
+      model(M.QWEN3_VL_8B_INSTRUCT, Q.Q8_K_XL, U.VISION),
     ],
   },
 ];

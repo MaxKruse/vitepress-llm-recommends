@@ -4,7 +4,7 @@ import type { RecommendedUsageMask } from "./constants/usage";
 
 export interface ModelCandidate {
   name: ModelName;
-  parameters: number;
+  parameters?: number;
   quantization: Quantization;
   usage: RecommendedUsageMask;
 }
@@ -12,10 +12,12 @@ export interface ModelCandidate {
 export interface RecommendationRule {
   ramMin: number;
   vramMin: number;
-  usefulness: number;
   models: ModelCandidate[];
 }
 
-export interface AggregatedRecommendation extends ModelCandidate {
-  usefulness: number;
+export interface AggregatedRecommendation extends Omit<
+  ModelCandidate,
+  "parameters"
+> {
+  parameters: number;
 }

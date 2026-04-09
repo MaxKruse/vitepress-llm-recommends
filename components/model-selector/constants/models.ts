@@ -18,9 +18,35 @@ export const MODEL_NAMES = {
   GEMMA_3_12B: "Gemma 3 12B",
   GEMMA_3_27B: "Gemma 3 27B",
   GLM_4_7_FLASH: "GLM 4.7 Flash",
+  GEMMA_4_26B_A4B: "Gemma 4 26B A4B",
+  GEMMA_4_31B: "Gemma 4 31B",
 } as const;
 
 export type ModelName = (typeof MODEL_NAMES)[keyof typeof MODEL_NAMES];
+
+const MODEL_PARAMETER_OVERRIDES: Partial<Record<ModelName, number>> = {
+  [MODEL_NAMES.QWEN3_CODER_NEXT]: 80,
+  [MODEL_NAMES.GLM_4_7_FLASH]: 30,
+};
+
+function extractLargestParameterSize(value?: string): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const matches = [...value.matchAll(/(\d+(?:\.\d+)?)B\b/gi)].flatMap(
+    (match) => {
+      const size = match[1];
+      return size ? [Number.parseFloat(size)] : [];
+    },
+  );
+
+  if (!matches.length) {
+    return null;
+  }
+
+  return Math.max(...matches);
+}
 
 export const MODEL_TO_HF_MAPPING: Partial<Record<ModelName, string>> = {
   [MODEL_NAMES.QWEN3_4B_INSTRUCT_2507]: "unsloth/Qwen3-4B-Instruct-2507-GGUF",
@@ -38,5 +64,16 @@ export const MODEL_TO_HF_MAPPING: Partial<Record<ModelName, string>> = {
   [MODEL_NAMES.GPT_OSS_120B]: "openai/gpt-oss-120b",
   [MODEL_NAMES.GEMMA_3_12B]: "unsloth/gemma-3-12b-it-GGUF",
   [MODEL_NAMES.GEMMA_3_27B]: "unsloth/gemma-3-27b-it-GGUF",
+  [MODEL_NAMES.GEMMA_4_26B_A4B]: "unsloth/gemma-4-26b-a4b-it-GGUF",
+  [MODEL_NAMES.GEMMA_4_31B]: "unsloth/gemma-4-31b-it-GGUF",
   [MODEL_NAMES.GLM_4_7_FLASH]: "unsloth/GLM-4.7-Flash-GGUF",
 };
+
+export function getModelParameterSize(modelName: ModelName): number {
+  const parameterSize =
+    extractLargestParameterSize(modelName) ??
+    extractLargestParameterSize(MODEL_TO_HF_MAPPING[modelName]) ??
+    MODEL_PARAMETER_OVERRIDES[modelName];
+
+  return parameterSize ?? 0;
+}
