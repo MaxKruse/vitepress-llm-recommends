@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   rules: () => DEFAULT_RECOMMENDATION_RULES,
   ramOptions: () => [16, 32, 64],
-  vramOptions: () => [0, 4, 6, 8, 12, 16, 24, 32],
+  vramOptions: () => [8, 12, 16, 24, 32],
   initialRam: 32,
   initialVram: 8,
 })

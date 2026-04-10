@@ -25,7 +25,12 @@ function updateVram(event: Event) {
     <label :class="$style.group">
       <span :class="$style.label">RAM (GB)</span>
       <select :value="props.ram" :class="$style.select" @change="updateRam">
-        <option v-for="option in props.ramOptions" :key="`ram-${option}`" :value="option">
+        <option
+          v-for="option in props.ramOptions"
+          :key="`ram-${option}`"
+          :value="option"
+          :selected="option === props.ram"
+        >
           {{ option }}
         </option>
       </select>
@@ -34,7 +39,12 @@ function updateVram(event: Event) {
     <label :class="$style.group">
       <span :class="$style.label">VRAM (GB)</span>
       <select :value="props.vram" :class="$style.select" @change="updateVram">
-        <option v-for="option in props.vramOptions" :key="`vram-${option}`" :value="option">
+        <option
+          v-for="option in props.vramOptions"
+          :key="`vram-${option}`"
+          :value="option"
+          :selected="option === props.vram"
+        >
           {{ option }}
         </option>
       </select>
