@@ -1,14 +1,25 @@
 <script setup lang="ts">
 import { withBase } from 'vitepress'
 import type { UsageLink } from './constants/usage'
+import type { UsageHighlightState } from './utils'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   usage: UsageLink
-}>()
+  state?: UsageHighlightState
+}>(), {
+  state: 'default',
+})
 </script>
 
 <template>
-  <a :href="withBase(props.usage.href)" :class="$style.tag">
+  <a
+    :href="withBase(props.usage.href)"
+    :class="[
+      $style.tag,
+      props.state === 'highlighted' ? $style.tagHighlighted : '',
+      props.state === 'dimmed' ? $style.tagDimmed : '',
+    ]"
+  >
     {{ props.usage.label }}
   </a>
 </template>
@@ -35,6 +46,16 @@ const props = defineProps<{
 .tag:hover {
   background: var(--vp-c-bg-soft);
   color: var(--vp-c-text-1);
+}
+
+.tagHighlighted {
+  border-color: color-mix(in srgb, var(--vp-c-brand-1) 45%, var(--vp-c-border));
+  background: color-mix(in srgb, var(--vp-c-brand-soft) 70%, var(--vp-c-bg));
+  color: var(--vp-c-brand-1);
+}
+
+.tagDimmed {
+  opacity: 0.5;
 }
 
 .tag:focus-visible {

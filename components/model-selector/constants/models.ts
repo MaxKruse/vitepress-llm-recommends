@@ -8,6 +8,7 @@ export const MODEL_NAMES = {
   QWEN3_5_9B: "Qwen3.5 9B",
   QWEN3_5_35B_A3B: "Qwen3.5 35B A3B",
   QWEN3_5_122B_A10B: "Qwen3.5 122B A10B",
+  QWEN3_VL_4B_INSTRUCT: "Qwen3 VL 4B Instruct",
   QWEN3_VL_8B_INSTRUCT: "Qwen3 VL 8B Instruct",
   QWEN3_VL_32B_INSTRUCT: "Qwen3 VL 32B Instruct",
   QWEN3_VL_235B_INSTRUCT: "Qwen3 VL 235B Instruct",
@@ -61,6 +62,7 @@ export const MODEL_TO_HF_MAPPING: Partial<Record<ModelName, string>> = {
   [MODEL_NAMES.QWEN3_5_9B]: "unsloth/Qwen3.5-9B-GGUF",
   [MODEL_NAMES.QWEN3_5_35B_A3B]: "unsloth/Qwen3.5-35B-A3B-GGUF",
   [MODEL_NAMES.QWEN3_5_122B_A10B]: "unsloth/Qwen3.5-122B-A10B-GGUF",
+  [MODEL_NAMES.QWEN3_VL_4B_INSTRUCT]: "unsloth/Qwen3-VL-4B-Instruct-GGUF",
   [MODEL_NAMES.QWEN3_VL_8B_INSTRUCT]: "unsloth/Qwen3-VL-8B-Instruct-GGUF",
   [MODEL_NAMES.QWEN3_VL_32B_INSTRUCT]: "unsloth/Qwen3-VL-32B-Instruct-GGUF",
   [MODEL_NAMES.QWEN3_VL_235B_INSTRUCT]:

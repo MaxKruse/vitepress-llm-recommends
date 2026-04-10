@@ -1,4 +1,5 @@
 import { MODEL_TO_HF_MAPPING, getModelParameterSize } from "./constants/models";
+import type { UsageKey } from "./constants/usage";
 import type {
   AggregatedRecommendation,
   ModelCandidate,
@@ -14,6 +15,19 @@ export function getLmStudioUri(modelName: string): string | null {
   }
 
   return `lmstudio://open_from_hf?model=${hfPath}`;
+}
+
+export type UsageHighlightState = "default" | "highlighted" | "dimmed";
+
+export function getUsageHighlightState(
+  usageKey: UsageKey,
+  activeUsageKeys: readonly UsageKey[],
+): UsageHighlightState {
+  if (!activeUsageKeys.length) {
+    return "default";
+  }
+
+  return activeUsageKeys.includes(usageKey) ? "highlighted" : "dimmed";
 }
 
 export function getQuantizationLevel(quantization: string): number {

@@ -5,7 +5,11 @@ import { QUANTIZATIONS as Q } from "./constants/quantizations";
 import { RECOMMENDED_USAGE as U } from "./constants/usage";
 import { DEFAULT_RECOMMENDATION_RULES } from "./recommendations";
 import type { RecommendationRule } from "./types";
-import { getLmStudioUri, getMatchingRecommendations } from "./utils";
+import {
+  getLmStudioUri,
+  getMatchingRecommendations,
+  getUsageHighlightState,
+} from "./utils";
 
 describe("getMatchingRecommendations", () => {
   it("derives parameter size from the model name and prefers the largest matching quantization for duplicate entries", () => {
@@ -51,5 +55,15 @@ describe("getMatchingRecommendations", () => {
     for (const modelName of recommendedModelNames) {
       expect(getLmStudioUri(modelName)).not.toBeNull();
     }
+  });
+
+  it("returns the correct usage tag highlight state", () => {
+    expect(getUsageHighlightState("coding", [])).toBe("default");
+    expect(getUsageHighlightState("coding", ["coding", "vision"])).toBe(
+      "highlighted",
+    );
+    expect(getUsageHighlightState("stem", ["coding", "vision"])).toBe(
+      "dimmed",
+    );
   });
 });

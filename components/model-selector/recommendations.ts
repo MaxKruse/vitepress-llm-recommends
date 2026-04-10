@@ -176,4 +176,9 @@ export const DEFAULT_RECOMMENDATION_RULES: RecommendationRule[] = [
     vramMin: 12,
     models: [model(M.QWEN3_VL_8B_INSTRUCT, Q.Q4_K_M, U.VISION)],
   },
+  {
+    ramMin: 32,
+    vramMin: 8,
+    models: [model(M.QWEN3_VL_4B_INSTRUCT, Q.Q4_K_M, U.VISION)],
+  },
 ] as const satisfies RecommendationRule[];
