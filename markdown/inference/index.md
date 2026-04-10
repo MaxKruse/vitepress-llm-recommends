@@ -4,7 +4,7 @@ title: Inference
 
 # Inference
 
-This section covers inference strategies, optimization techniques, and deployment considerations for AI models—particularly those that can run **locally** on consumer hardware.
+This section covers inference strategies, optimization techniques, and deployment considerations for AI models-particularly those that can run **locally** on consumer hardware.
 
 > [!WARNING]
 > While Ollama excels at simplifying local LLM setup, be aware of several significant challenges. It demands substantial hardware (high RAM and powerful GPUs) and is prone to stability issues like service crashes, memory leaks, and inconsistent performance. Users should also expect the following:
@@ -21,7 +21,7 @@ Running models locally offers privacy, reduced latency, and offline capabilities
 ### [llama.cpp](https://github.com/ggerganov/llama.cpp)
 - **Best for**: Flexible local inference across **CPU-only**, **GPU-only**, or **hybrid CPU+GPU** setups.
 - **Pros**: Fully open source, supports a wide range of architectures (x86, ARM, Apple Silicon), and offers multiple backends including CUDA (NVIDIA), Metal (Apple) and Vulkan,. Excellent support for quantized GGUF models, enabling efficient inference even on modest hardware.
-- **Use when**: You want maximum control, portability, and performance across diverse hardware—laptops, desktops, servers, or mobile devices.
+- **Use when**: You want maximum control, portability, and performance across diverse hardware-laptops, desktops, servers, or mobile devices.
 
 ### [LM Studio](https://lmstudio.ai/)
 - **Best for**: Desktop GUI users who want to explore and chat with local models.

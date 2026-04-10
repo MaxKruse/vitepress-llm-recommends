@@ -9,7 +9,7 @@ import RecommendationPageIntro from '../../../components/model-selector/Recommen
 # Coding Recommendations  
 **Prioritizing Very High Precision in Code Generation and Debugging**
 
-When working with AI-assisted coding, **precision is non-negotiable**. Even minor hallucinations, syntactic errors, or incorrect logic can introduce bugs, security vulnerabilities, or maintenance debt. These recommendations are tailored for developers who require **extremely high-fidelity outputs**—not just plausible-looking code, but **correct, production-ready, and logically sound** implementations.
+When working with AI-assisted coding, **precision is non-negotiable**. Even minor hallucinations, syntactic errors, or incorrect logic can introduce bugs, security vulnerabilities, or maintenance debt. These recommendations are tailored for developers who require **extremely high-fidelity outputs**-not just plausible-looking code, but **correct, production-ready, and logically sound** implementations.
 
 <RecommendationPageIntro usageKey="coding" />
 

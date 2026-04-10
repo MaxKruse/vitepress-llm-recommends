@@ -8,7 +8,7 @@ import RecommendationPageIntro from '../../../components/model-selector/Recommen
 
 # Instruct-Tuned Models
 
-Instruct-tuned models are AI assistants trained specifically to understand and follow your directions—whether you're asking for help writing an email, summarizing a document, planning a trip, or explaining a complex idea. Unlike raw base models, these are fine-tuned to respond helpfully, clearly, and on-topic.
+Instruct-tuned models are AI assistants trained specifically to understand and follow your directions-whether you're asking for help writing an email, summarizing a document, planning a trip, or explaining a complex idea. Unlike raw base models, these are fine-tuned to respond helpfully, clearly, and on-topic.
 
 <RecommendationPageIntro usageKey="instruct" />
 

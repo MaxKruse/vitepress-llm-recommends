@@ -85,13 +85,13 @@ Imagine a single 16-bit parameter (`0011010101110101`) represents the following 
 >
 > Sunlight contains all wavelengths (colors) of visible light. Chlorophyll absorbs light most efficiently in the blue (~430-450 nm) and red (~640-680 nm) regions of the spectrum, which are used to drive photosynthesis.
 >
-> However, it reflects and transmits green light (~500-550 nm) rather than absorbing it. Because the green wavelengths are not absorbed, they bounce off the leaf and enter our eyes — that's why we perceive leaves as green.
+> However, it reflects and transmits green light (~500-550 nm) rather than absorbing it. Because the green wavelengths are not absorbed, they bounce off the leaf and enter our eyes - that's why we perceive leaves as green.
 
 If we quantize this 16-bit value down to just 4 bits (`0011`), we are essentially "cutting off" the fine-grained details. The model might now only retain enough information to generate a simpler explanation:
 
 > Leaves are green because they have a special color helper inside called chlorophyll.
 >
-> The leaf uses sunlight to make its food, kind of like how you eat to get energy. Chlorophyll drinks up red and blue sunlight but doesn't like green light — it bounces the green light away.
+> The leaf uses sunlight to make its food, kind of like how you eat to get energy. Chlorophyll drinks up red and blue sunlight but doesn't like green light - it bounces the green light away.
 >
 > That's what your eyes see, so the leaf looks green!
 
@@ -99,7 +99,7 @@ By removing detail, you risk losing accuracy. While the quantized model still se
 
 ### What are Hallucinations?
 
-LLMs famously "hallucinate"—they generate confident-sounding but incorrect or nonsensical information. While the exact cause is complex, you can think of it like this:
+LLMs famously "hallucinate"-they generate confident-sounding but incorrect or nonsensical information. While the exact cause is complex, you can think of it like this:
 
 Imagine you know many different topics, but only at a very surface level. If someone asks you a question that *seems* like it could be answered by combining facts from different topics, you might construct an answer that sounds plausible but is ultimately wrong.
 

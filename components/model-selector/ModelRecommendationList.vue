@@ -140,7 +140,7 @@ function itemMatchesHighlightedUsage(item: AggregatedRecommendation) {
                 >
                   LMStudio
                 </a>
-                <span v-else :class="$style.muted">—</span>
+                <span v-else :class="$style.muted">-</span>
               </td>
             </tr>
           </tbody>
