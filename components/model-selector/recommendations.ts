@@ -52,10 +52,128 @@ export const USE_CASE_COPY = {
 export type UseCaseKey = keyof typeof USE_CASE_COPY;
 
 export const DEFAULT_RECOMMENDATION_RULES: RecommendationRule[] = [
-  // Placeholder only — replace this with your real rules.
+  // Coding Models - Big to small
   {
-    ramMin: 0,
-    vramMin: 0,
-    models: [model(M.QWEN3_4B_INSTRUCT_2507, Q.Q4_K_XL, U.INSTRUCT)],
+    ramMin: 64,
+    vramMin: 12,
+    models: [model(M.QWEN3_CODER_NEXT, Q.Q4_K_M, U.CODING)],
   },
-];
+  {
+    ramMin: 32,
+    vramMin: 8,
+    models: [model(M.GLM_4_7_FLASH, Q.Q4_K_M, U.CODING | U.STORYWRITING)],
+  },
+  // Instruct Models - Big to small
+  {
+    ramMin: 64,
+    vramMin: 16,
+    models: [
+      model(M.MISTRAL_SMALL_3_2, Q.Q4_K_M, U.INSTRUCT),
+      model(
+        M.GEMMA_4_31B,
+        Q.Q4_K_M,
+        U.INSTRUCT | U.STORYWRITING | U.PERSONAL_ASSISTANT,
+      ),
+    ],
+  },
+  {
+    ramMin: 64,
+    vramMin: 12,
+    models: [
+      model(
+        M.GEMMA_4_26B_A4B,
+        Q.Q8_0,
+        U.INSTRUCT | U.STORYWRITING | U.PERSONAL_ASSISTANT,
+      ),
+    ],
+  },
+  {
+    ramMin: 32,
+    vramMin: 8,
+    models: [
+      model(
+        M.QWEN3_5_35B_A3B,
+        Q.Q4_K_M,
+        U.INSTRUCT | U.PERSONAL_ASSISTANT | U.STEM,
+      ),
+      model(M.QWEN3_4B_INSTRUCT_2507, Q.Q8_0, U.INSTRUCT),
+    ],
+  },
+
+  // Personal Assistant Models - Big to small
+  {
+    ramMin: 64,
+    vramMin: 32,
+    models: [
+      model(M.QWEN3_5_122B_A10B, Q.Q4_K_M, U.PERSONAL_ASSISTANT | U.STEM),
+      model(
+        M.GEMMA_4_31B,
+        Q.Q6_K_XL,
+        U.INSTRUCT | U.STORYWRITING | U.PERSONAL_ASSISTANT,
+      ),
+    ],
+  },
+  {
+    ramMin: 64,
+    vramMin: 12,
+    models: [
+      model(
+        M.GEMMA_4_26B_A4B,
+        Q.Q8_0,
+        U.INSTRUCT | U.STORYWRITING | U.PERSONAL_ASSISTANT,
+      ),
+      model(M.QWEN3_5_35B_A3B, Q.Q8_0, U.INSTRUCT | U.PERSONAL_ASSISTANT),
+    ],
+  },
+  {
+    ramMin: 32,
+    vramMin: 8,
+    models: [
+      model(M.QWEN3_5_35B_A3B, Q.Q4_K_M, U.PERSONAL_ASSISTANT),
+      model(M.GPT_OSS_20B, Q.MXFP4, U.PERSONAL_ASSISTANT),
+    ],
+  },
+  // STEM and Reasoning
+  {
+    ramMin: 64,
+    vramMin: 24,
+
+    models: [model(M.QWEN3_5_122B_A10B, Q.Q4_K_M, U.STEM)],
+  },
+  // Storywriting/RP
+  {
+    ramMin: 64,
+    vramMin: 32,
+    models: [
+      model(M.MISTRAL_SMALL_4, Q.Q4_K_M, U.STORYWRITING),
+      model(M.GEMMA_4_31B, Q.Q8_0, U.STORYWRITING),
+    ],
+  },
+  {
+    ramMin: 64,
+    vramMin: 12,
+    models: [
+      model(M.GLM_4_7_FLASH, Q.Q4_K_M, U.STORYWRITING),
+      model(M.GEMMA_4_26B_A4B, Q.Q8_0, U.STORYWRITING),
+    ],
+  },
+  {
+    ramMin: 32,
+    vramMin: 8,
+    models: [
+      model(M.GLM_4_7_FLASH, Q.Q4_K_M, U.STORYWRITING),
+      model(M.GEMMA_4_26B_A4B, Q.Q4_K_M, U.STORYWRITING),
+    ],
+  },
+  // Vision Tasks
+  {
+    ramMin: 64,
+    vramMin: 32,
+    models: [model(M.QWEN3_VL_32B_INSTRUCT, Q.Q6_K_XL, U.VISION)],
+  },
+  {
+    ramMin: 32,
+    vramMin: 12,
+    models: [model(M.QWEN3_VL_8B_INSTRUCT, Q.Q4_K_M, U.VISION)],
+  },
+] as const satisfies RecommendationRule[];
