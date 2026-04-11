@@ -8,7 +8,9 @@ import ModelSelector from '../../components/ModelSelector.vue'
 
 # Recommendations
 
-Use the selector below to find hardware-based model picks. Enter your RAM and VRAM to see recommended models, their usage tags, and links to the explanation pages.
+Use the selector below to find hardware-based model picks quickly. Enter your RAM and VRAM to see recommended models, their usage tags, and links to the explanation pages.
+
+<ModelSelector />
 
 ## Assumptions
 
@@ -18,8 +20,6 @@ For all models, the following assumptions are made:
 - **Inference Settings**: Recommended as per the model developers, with **no** KV-Cache quantization.
 - **Context Size**: 32K Tokens. Enough to get small things done, and on most modern models not prohibitively large.
 - **Usage**: Chat-only. No agentic usecases.
-
-<ModelSelector />
 
 ## Use-case guides
 
