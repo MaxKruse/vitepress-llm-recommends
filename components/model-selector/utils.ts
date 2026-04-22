@@ -74,7 +74,7 @@ export function calculateFileSizeGb(
   const quantLevel = getQuantizationLevel(quantization);
   const baseSize = paramsB * (quantLevel / 8);
 
-  return baseSize + getVisionAdapterSize(modelName);
+  return baseSize * 1.4 + getVisionAdapterSize(modelName);
 }
 
 function resolveModelCandidate(
