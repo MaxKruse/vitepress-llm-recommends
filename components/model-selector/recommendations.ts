@@ -92,7 +92,7 @@ export const DEFAULT_RECOMMENDATION_RULES: RecommendationRule[] = [
     vramMin: 8,
     models: [
       model(
-        M.QWEN3_5_35B_A3B,
+        M.QWEN3_6_35B_A3B,
         Q.Q4_K_M,
         U.INSTRUCT | U.PERSONAL_ASSISTANT | U.STEM,
       ),
@@ -122,14 +122,14 @@ export const DEFAULT_RECOMMENDATION_RULES: RecommendationRule[] = [
         Q.Q8_0,
         U.INSTRUCT | U.STORYWRITING | U.PERSONAL_ASSISTANT,
       ),
-      model(M.QWEN3_5_35B_A3B, Q.Q8_0, U.INSTRUCT | U.PERSONAL_ASSISTANT),
+      model(M.QWEN3_6_35B_A3B, Q.Q8_0, U.INSTRUCT | U.PERSONAL_ASSISTANT),
     ],
   },
   {
     ramMin: 32,
     vramMin: 8,
     models: [
-      model(M.QWEN3_5_35B_A3B, Q.Q4_K_M, U.PERSONAL_ASSISTANT),
+      model(M.QWEN3_6_35B_A3B, Q.Q4_K_M, U.PERSONAL_ASSISTANT),
       model(M.GPT_OSS_20B, Q.MXFP4, U.PERSONAL_ASSISTANT),
     ],
   },
