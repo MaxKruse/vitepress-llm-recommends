@@ -16,7 +16,7 @@ Use the selector below to find hardware-based model picks quickly. Enter your RA
 
 For all models, the following assumptions are made:
 
-- **OS**: Windows 10/11, meaning 1GB VRAM overhead + 6/8/12GB RAM overhead for the system (16/32/6GB total RAM).
+- **OS**: Windows 10/11, meaning 1GB VRAM overhead + 6/8/12GB RAM overhead for the system (16/32/64GB total RAM).
 - **Inference Settings**: Recommended as per the model developers, with **no** KV-Cache quantization.
 - **Context Size**: 32K Tokens. Enough to get small things done, and on most modern models not prohibitively large.
 - **Usage**: Chat-only. No agentic usecases.
