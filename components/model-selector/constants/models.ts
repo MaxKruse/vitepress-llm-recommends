@@ -74,7 +74,7 @@ export const MODEL_TO_HF_MAPPING: Partial<Record<ModelName, string>> = {
   [MODEL_NAMES.MISTRAL_SMALL_3_2]:
     "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF",
   [MODEL_NAMES.MISTRAL_SMALL_4]: "unsloth/Mistral-Small-4-119B-2603-GGUF",
-  [MODEL_NAMES.GPT_OSS_20B]: "openai/gpt-oss-20b",
+  [MODEL_NAMES.GPT_OSS_20B]: "lmstudio-community/gpt-oss-20b-GGUF",
   [MODEL_NAMES.GPT_OSS_120B]: "openai/gpt-oss-120b",
   [MODEL_NAMES.GEMMA_3_12B]: "unsloth/gemma-3-12b-it-GGUF",
   [MODEL_NAMES.GEMMA_3_27B]: "unsloth/gemma-3-27b-it-GGUF",

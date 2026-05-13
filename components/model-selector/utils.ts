@@ -1,10 +1,32 @@
 import { MODEL_TO_HF_MAPPING, getModelParameterSize } from "./constants/models";
+import { MODEL_SIZE_ESTIMATES_GB } from "./constants/model-size-estimates";
 import type { UsageKey } from "./constants/usage";
 import type {
   AggregatedRecommendation,
   ModelCandidate,
   RecommendationRule,
 } from "./types";
+
+const modelSizeEstimateByKey = new Map(
+  MODEL_SIZE_ESTIMATES_GB.map((entry) => [
+    `${entry.name}|${entry.quantization}`,
+    entry.sizeGb,
+  ]),
+);
+
+const SYSTEM_VRAM_OVERHEAD_GB = 1;
+
+function getSystemRamOverheadGb(totalRamGb: number): number {
+  if (totalRamGb <= 16) {
+    return 6;
+  }
+
+  if (totalRamGb <= 32) {
+    return 8;
+  }
+
+  return 12;
+}
 
 export function getLmStudioUri(modelName: string): string | null {
   const hfPath =
@@ -72,11 +94,28 @@ function getQuantizationOverhead(quantization: string): number {
   return /K_/i.test(quantization) ? 1.15 : 1.0;
 }
 
+function getMeasuredModelSizeGb(
+  modelName: string,
+  quantization: string,
+): number | null {
+  const measured = modelSizeEstimateByKey.get(`${modelName}|${quantization}`);
+
+  return measured ?? null;
+}
+
 export function calculateFileSizeGb(
   paramsB: number,
   quantization: string,
   modelName = "",
 ): number {
+  if (modelName) {
+    const measuredSize = getMeasuredModelSizeGb(modelName, quantization);
+
+    if (measuredSize !== null) {
+      return measuredSize;
+    }
+  }
+
   const quantLevel = getQuantizationLevel(quantization);
   const baseSize = paramsB * (quantLevel / 8);
   const overhead = getQuantizationOverhead(quantization);
@@ -107,6 +146,56 @@ function shouldReplaceExisting(
   return next.parameters > current.parameters;
 }
 
+function parseMoeActiveParameters(modelName: string): number | null {
+  const match = modelName.match(/\bA(\d+(?:\.\d+)?)B\b/i);
+  const active = match?.[1];
+
+  if (!active) {
+    return null;
+  }
+
+  return Number.parseFloat(active);
+}
+
+function getRequiredMemorySplitGb(
+  model: AggregatedRecommendation,
+): { ramGb: number; vramGb: number } {
+  const fileSizeGb = calculateFileSizeGb(
+    model.parameters,
+    model.quantization,
+    model.name,
+  );
+  const moeActiveB = parseMoeActiveParameters(model.name);
+
+  if (moeActiveB !== null && model.parameters > 0) {
+    const activeRatio = Math.min(Math.max(moeActiveB / model.parameters, 0), 1);
+    const vramForWeightsGb = Math.max(2, fileSizeGb * activeRatio);
+    const ramForWeightsGb = Math.max(0, fileSizeGb - vramForWeightsGb);
+
+    return {
+      ramGb: ramForWeightsGb,
+      vramGb: vramForWeightsGb,
+    };
+  }
+
+  return {
+    ramGb: 0,
+    vramGb: fileSizeGb,
+  };
+}
+
+function canFitWithinHardware(
+  model: AggregatedRecommendation,
+  totalRamGb: number,
+  totalVramGb: number,
+): boolean {
+  const availableRamGb = Math.max(0, totalRamGb - getSystemRamOverheadGb(totalRamGb));
+  const availableVramGb = Math.max(0, totalVramGb - SYSTEM_VRAM_OVERHEAD_GB);
+  const required = getRequiredMemorySplitGb(model);
+
+  return availableRamGb >= required.ramGb && availableVramGb >= required.vramGb;
+}
+
 export function getMatchingRecommendations(
   ram: number,
   vram: number,
@@ -121,6 +210,11 @@ export function getMatchingRecommendations(
 
     for (const candidate of rule.models) {
       const model = resolveModelCandidate(candidate);
+
+      if (!canFitWithinHardware(model, ram, vram)) {
+        continue;
+      }
+
       const existing = aggregated.get(model.name);
 
       if (!existing) {

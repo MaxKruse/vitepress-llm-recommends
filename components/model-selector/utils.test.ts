@@ -23,11 +23,14 @@ const ACTUAL_GGUF_SIZES_GB: Array<{
   quantization: string;
   actualGb: number;
 }> = [
-  { name: M.QWEN3_CODER_NEXT, quantization: Q.Q4_K_M, actualGb: 45.2 },
+  { name: M.QWEN3_CODER_NEXT, quantization: Q.Q4_K_M, actualGb: 45.92 },
   { name: M.GLM_4_7_FLASH, quantization: Q.Q4_K_M, actualGb: 17.05 },
   { name: M.GEMMA_4_26B_A4B, quantization: Q.Q4_K_M, actualGb: 15.78 },
   { name: M.QWEN3_6_35B_A3B, quantization: Q.Q4_K_M, actualGb: 20.61 },
   { name: M.QWEN3_6_27B, quantization: Q.Q4_K_M, actualGb: 15.66 },
+  { name: M.QWEN3_5_122B_A10B, quantization: Q.Q4_K_M, actualGb: 71.28 },
+  { name: M.GPT_OSS_20B, quantization: Q.MXFP4, actualGb: 11.28 },
+  { name: M.MISTRAL_SMALL_4, quantization: Q.Q4_K_M, actualGb: 68.7 },
   { name: M.QWEN3_4B_INSTRUCT_2507, quantization: Q.Q8_0, actualGb: 3.99 },
 ];
 
@@ -84,7 +87,7 @@ describe("getMatchingRecommendations", () => {
       },
     ];
 
-    const [recommendation] = getMatchingRecommendations(64, 0, rules);
+    const [recommendation] = getMatchingRecommendations(64, 40, rules);
 
     expect(recommendation?.parameters).toBe(30);
     expect(recommendation?.quantization).toBe(Q.Q8_K_XL);
@@ -126,6 +129,12 @@ describe("getMatchingRecommendations", () => {
 
     expect(moeRule!.ramMin).toBeGreaterThanOrEqual(denseRule!.ramMin);
     expect(moeRule!.vramMin).toBeLessThan(denseRule!.vramMin);
+  });
+
+  it("filters out models that exceed available RAM after system overhead", () => {
+    const matches = getMatchingRecommendations(64, 12, DEFAULT_RECOMMENDATION_RULES);
+
+    expect(matches.some((item) => item.name === M.QWEN3_5_122B_A10B)).toBeFalse();
   });
 
   it("contains generated hardware tiers for every currently defined model", () => {
