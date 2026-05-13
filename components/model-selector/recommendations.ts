@@ -2,6 +2,8 @@ import { MODEL_NAMES as M } from "./constants/models";
 import { QUANTIZATIONS as Q } from "./constants/quantizations";
 import { RECOMMENDED_USAGE as U } from "./constants/usage";
 import type { ModelCandidate, RecommendationRule } from "./types";
+import { getModelParameterSize } from "./constants/models";
+import { calculateFileSizeGb } from "./utils";
 
 const model = (
   name: ModelCandidate["name"],
@@ -31,6 +33,23 @@ type RecommendationTier = {
   ramMin: number;
   vramMin: number;
   picks: ModelSelection[];
+};
+
+const RAM_TIERS_GB = [16, 32, 64] as const;
+const VRAM_TIERS_GB = [8, 12, 16, 24, 32] as const;
+
+const SYSTEM_VRAM_OVERHEAD_GB = 1;
+
+const getSystemRamOverheadGb = (ramTierGb: number): number => {
+  if (ramTierGb <= 16) {
+    return 6;
+  }
+
+  if (ramTierGb <= 32) {
+    return 8;
+  }
+
+  return 12;
 };
 
 const combine = (
@@ -154,95 +173,115 @@ function candidateFromSelection(selection: ModelSelection): ModelCandidate {
   return model(selection.name, selection.quantization, usage);
 }
 
-const RECOMMENDATION_TIERS: RecommendationTier[] = [
-  // Coding Models - Big to small
-  {
-    ramMin: 64,
-    vramMin: 12,
-    picks: [pick(M.QWEN3_CODER_NEXT, Q.Q4_K_M)],
-  },
-  {
-    ramMin: 32,
-    vramMin: 8,
-    picks: [pick(M.GLM_4_7_FLASH, Q.Q4_K_M)],
-  },
-  // Instruct Models - Big to small
-  {
-    ramMin: 64,
-    vramMin: 16,
-    picks: [pick(M.MISTRAL_SMALL_3_2, Q.Q4_K_M), pick(M.GEMMA_4_31B, Q.Q4_K_M)],
-  },
-  {
-    ramMin: 64,
-    vramMin: 12,
-    picks: [pick(M.GEMMA_4_26B_A4B, Q.Q8_0)],
-  },
-  {
-    ramMin: 32,
-    vramMin: 8,
-    picks: [
-      pick(M.QWEN3_6_35B_A3B, Q.Q4_K_M),
-      pick(M.QWEN3_4B_INSTRUCT_2507, Q.Q8_0),
-    ],
-  },
-  // Personal Assistant Models - Big to small
-  {
-    ramMin: 64,
-    vramMin: 32,
-    picks: [
-      pick(M.QWEN3_5_122B_A10B, Q.Q4_K_M),
-      pick(M.GEMMA_4_31B, Q.Q6_K_XL),
-    ],
-  },
-  {
-    ramMin: 64,
-    vramMin: 12,
-    picks: [pick(M.GEMMA_4_26B_A4B, Q.Q8_0), pick(M.QWEN3_6_35B_A3B, Q.Q8_0)],
-  },
-  {
-    ramMin: 32,
-    vramMin: 8,
-    picks: [pick(M.QWEN3_6_35B_A3B, Q.Q4_K_M), pick(M.GPT_OSS_20B, Q.MXFP4)],
-  },
-  // STEM and Reasoning
-  {
-    ramMin: 64,
-    vramMin: 24,
-    picks: [pick(M.QWEN3_5_122B_A10B, Q.Q4_K_M)],
-  },
-  // Storywriting/RP
-  {
-    ramMin: 64,
-    vramMin: 32,
-    picks: [pick(M.MISTRAL_SMALL_4, Q.Q4_K_M), pick(M.GEMMA_4_31B, Q.Q8_0)],
-  },
-  {
-    ramMin: 64,
-    vramMin: 12,
-    picks: [pick(M.GLM_4_7_FLASH, Q.Q4_K_M), pick(M.GEMMA_4_26B_A4B, Q.Q8_0)],
-  },
-  {
-    ramMin: 32,
-    vramMin: 8,
-    picks: [pick(M.GLM_4_7_FLASH, Q.Q4_K_M), pick(M.GEMMA_4_26B_A4B, Q.Q4_K_M)],
-  },
-  // Vision Tasks
-  {
-    ramMin: 64,
-    vramMin: 32,
-    picks: [pick(M.QWEN3_VL_32B_INSTRUCT, Q.Q6_K_XL)],
-  },
-  {
-    ramMin: 32,
-    vramMin: 12,
-    picks: [pick(M.QWEN3_VL_8B_INSTRUCT, Q.Q4_K_M)],
-  },
-  {
-    ramMin: 32,
-    vramMin: 8,
-    picks: [pick(M.QWEN3_VL_4B_INSTRUCT, Q.Q4_K_M)],
-  },
-];
+function parseMoeActiveParameters(modelName: string): number | null {
+  const match = modelName.match(/\bA(\d+(?:\.\d+)?)B\b/i);
+  const active = match?.[1];
+
+  if (!active) {
+    return null;
+  }
+
+  return Number.parseFloat(active);
+}
+
+function pickTier(
+  requiredModelGb: number,
+  tiers: readonly number[],
+  overheadGb: number,
+): number {
+  for (const tier of tiers) {
+    const availableForModel = tier - overheadGb;
+
+    if (availableForModel >= requiredModelGb) {
+      return tier;
+    }
+  }
+
+  const fallback = tiers[tiers.length - 1];
+
+  if (fallback === undefined) {
+    throw new Error("At least one hardware tier must be configured.");
+  }
+
+  return fallback;
+}
+
+function pickRamTier(requiredModelGb: number): number {
+  for (const tier of RAM_TIERS_GB) {
+    const availableForModel = tier - getSystemRamOverheadGb(tier);
+
+    if (availableForModel >= requiredModelGb) {
+      return tier;
+    }
+  }
+
+  const fallback = RAM_TIERS_GB[RAM_TIERS_GB.length - 1];
+
+  if (fallback === undefined) {
+    throw new Error("At least one RAM tier must be configured.");
+  }
+
+  return fallback;
+}
+
+function getTierForSelection(selection: ModelSelection): RecommendationTier {
+  const parameters = getModelParameterSize(selection.name);
+  const fileSizeGb = calculateFileSizeGb(
+    parameters,
+    selection.quantization,
+    selection.name,
+  );
+  const moeActiveB = parseMoeActiveParameters(selection.name);
+
+  if (moeActiveB !== null && parameters > 0) {
+    const activeRatio = Math.min(Math.max(moeActiveB / parameters, 0), 1);
+    const vramForWeightsGb = Math.max(2, fileSizeGb * activeRatio);
+    const ramForWeightsGb = Math.max(0, fileSizeGb - vramForWeightsGb);
+
+    return {
+      ramMin: pickRamTier(ramForWeightsGb),
+      vramMin: pickTier(vramForWeightsGb, VRAM_TIERS_GB, SYSTEM_VRAM_OVERHEAD_GB),
+      picks: [selection],
+    };
+  }
+
+  return {
+    // Dense models are expected to fully fit inside VRAM.
+    ramMin: pickRamTier(0),
+    vramMin: pickTier(fileSizeGb, VRAM_TIERS_GB, SYSTEM_VRAM_OVERHEAD_GB),
+    picks: [selection],
+  };
+}
+
+function buildRecommendationTiers(): RecommendationTier[] {
+  const tiersByHardware = new Map<string, RecommendationTier>();
+
+  for (const profile of MODEL_RECOMMENDATION_PROFILES) {
+    const quantizations = Object.keys(profile.usageByQuantization) as Array<
+      ModelCandidate["quantization"]
+    >;
+
+    for (const quantization of quantizations) {
+      const selection = pick(profile.name, quantization);
+      const tier = getTierForSelection(selection);
+      const key = `${tier.ramMin}:${tier.vramMin}`;
+      const existingTier = tiersByHardware.get(key);
+
+      if (existingTier) {
+        existingTier.picks.push(selection);
+        continue;
+      }
+
+      tiersByHardware.set(key, tier);
+    }
+  }
+
+  return [...tiersByHardware.values()].sort(
+    (left, right) => left.ramMin - right.ramMin || left.vramMin - right.vramMin,
+  );
+}
+
+const RECOMMENDATION_TIERS: RecommendationTier[] = buildRecommendationTiers();
 
 export const DEFAULT_RECOMMENDATION_RULES: RecommendationRule[] =
   RECOMMENDATION_TIERS.map((tier) => ({

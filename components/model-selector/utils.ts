@@ -55,15 +55,21 @@ export function hasVisionAdapter(modelName: string): boolean {
 }
 
 function getVisionAdapterSize(modelName: string): number {
-  if (/qwen3\s*vl/i.test(modelName)) {
-    return 1.3;
-  }
-
-  if (/mistral\s*small|gemma\s*3/i.test(modelName)) {
-    return 0.9;
+  // All vision-capable models ship a separate mmproj adapter file that must be
+  // loaded alongside the base GGUF. Adapters range from ~800 MB to ~1.9 GB;
+  // we use the upper bound to avoid under-estimating VRAM requirements.
+  if (hasVisionAdapter(modelName)) {
+    return 1.9;
   }
 
   return 0;
+}
+
+function getQuantizationOverhead(quantization: string): number {
+  // K-quantizations use mixed precision (some layers higher than nominal),
+  // adding ~15 % overhead over pure weight bytes.
+  // Standard integer quants (Q8_0, Q4_0, etc.) are close to 1:1.
+  return /K_/i.test(quantization) ? 1.15 : 1.0;
 }
 
 export function calculateFileSizeGb(
@@ -73,8 +79,9 @@ export function calculateFileSizeGb(
 ): number {
   const quantLevel = getQuantizationLevel(quantization);
   const baseSize = paramsB * (quantLevel / 8);
+  const overhead = getQuantizationOverhead(quantization);
 
-  return baseSize * 1.4 + getVisionAdapterSize(modelName);
+  return baseSize * overhead + getVisionAdapterSize(modelName);
 }
 
 function resolveModelCandidate(

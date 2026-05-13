@@ -15,6 +15,7 @@
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview",
     "build:docs": "bun run docs:build",
-    "deploy:gh-pages": "bun run docs:build && bunx gh-pages -d docs"
+    "deploy:gh-pages": "bun run docs:build && bunx gh-pages -d docs",
+    "models:update": "bun run scripts/update-model-sizes.ts"
   }
 }
