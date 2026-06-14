@@ -14,72 +14,55 @@ import {
 } from "./utils";
 
 // Actual GGUF file sizes sourced from Hugging Face via HEAD requests (May 2026).
-// Vision models are excluded here because calculateFileSizeGb intentionally adds
-// a 1.9 GB adapter overhead on top of the base GGUF — testing them against the
-// raw GGUF size alone would produce a false failure.
 // Tolerance is ±8 % to allow for minor upstream file changes without false failures.
 const ACTUAL_GGUF_SIZES_GB: Array<{
   name: ModelName;
   quantization: string;
   actualGb: number;
 }> = [
-  { name: M.QWEN3_CODER_NEXT, quantization: Q.Q4_K_M, actualGb: 45.92 },
-  { name: M.GLM_4_7_FLASH, quantization: Q.Q4_K_M, actualGb: 17.05 },
-  { name: M.GEMMA_4_26B_A4B, quantization: Q.Q4_K_M, actualGb: 15.78 },
+  { name: M.QWEN3_5_9B, quantization: Q.Q4_K_M, actualGb: 5.18 },
+  { name: M.LFM2_5_8B_A1B, quantization: Q.Q4_K_M, actualGb: 4.60 },
   { name: M.QWEN3_6_35B_A3B, quantization: Q.Q4_K_M, actualGb: 20.61 },
   { name: M.QWEN3_6_27B, quantization: Q.Q4_K_M, actualGb: 15.66 },
-  { name: M.QWEN3_5_122B_A10B, quantization: Q.Q4_K_M, actualGb: 71.28 },
-  { name: M.GPT_OSS_20B, quantization: Q.MXFP4, actualGb: 11.28 },
-  { name: M.MISTRAL_SMALL_4, quantization: Q.Q4_K_M, actualGb: 68.7 },
-  { name: M.QWEN3_4B_INSTRUCT_2507, quantization: Q.Q8_0, actualGb: 3.99 },
-];
-
-// Vision models: actual GGUF size + 1.9 GB assumed adapter overhead.
-const ACTUAL_VISION_SIZES_GB: Array<{
-  name: ModelName;
-  quantization: string;
-  actualGb: number;
-}> = [
-  { name: M.QWEN3_VL_32B_INSTRUCT, quantization: Q.Q6_K_XL, actualGb: 26.97 + 1.9 },
-  { name: M.QWEN3_VL_8B_INSTRUCT, quantization: Q.Q4_K_M, actualGb: 4.68 + 1.9 },
-  { name: M.QWEN3_VL_4B_INSTRUCT, quantization: Q.Q4_K_M, actualGb: 2.33 + 1.9 },
+  { name: M.QWEN3_6_27B, quantization: Q.Q6_K_XL, actualGb: 23.18 },
+  { name: M.QWEN3_CODER_NEXT, quantization: Q.Q4_K_M, actualGb: 45.92 },
+  { name: M.GEMMA_4_12B, quantization: Q.Q4_K_M, actualGb: 6.90 },
+  { name: M.GEMMA_4_26B_A4B, quantization: Q.Q4_K_M, actualGb: 15.78 },
+  { name: M.GEMMA_4_31B, quantization: Q.Q4_K_M, actualGb: 17.83 },
 ];
 
 const EXPECTED_MODEL_QUANTIZATION_ENTRIES = [
-  { name: M.QWEN3_CODER_NEXT, quantization: Q.Q4_K_M },
-  { name: M.GLM_4_7_FLASH, quantization: Q.Q4_K_M },
-  { name: M.GEMMA_4_26B_A4B, quantization: Q.Q4_K_M },
+  { name: M.QWEN3_5_9B, quantization: Q.Q4_K_M },
+  { name: M.LFM2_5_8B_A1B, quantization: Q.Q4_K_M },
   { name: M.QWEN3_6_35B_A3B, quantization: Q.Q4_K_M },
   { name: M.QWEN3_6_27B, quantization: Q.Q4_K_M },
-  { name: M.QWEN3_5_122B_A10B, quantization: Q.Q4_K_M },
-  { name: M.GPT_OSS_20B, quantization: Q.MXFP4 },
-  { name: M.MISTRAL_SMALL_4, quantization: Q.Q4_K_M },
-  { name: M.QWEN3_VL_32B_INSTRUCT, quantization: Q.Q6_K_XL },
-  { name: M.QWEN3_VL_8B_INSTRUCT, quantization: Q.Q4_K_M },
-  { name: M.QWEN3_VL_4B_INSTRUCT, quantization: Q.Q4_K_M },
-  { name: M.QWEN3_4B_INSTRUCT_2507, quantization: Q.Q8_0 },
+  { name: M.QWEN3_6_27B, quantization: Q.Q6_K_XL },
+  { name: M.GEMMA_4_12B, quantization: Q.Q4_K_M },
+  { name: M.GEMMA_4_26B_A4B, quantization: Q.Q4_K_M },
+  { name: M.GEMMA_4_31B, quantization: Q.Q4_K_M },
+  { name: M.QWEN3_CODER_NEXT, quantization: Q.Q4_K_M },
 ] as const;
 
 describe("getMatchingRecommendations", () => {
   it("derives parameter size from the model name and prefers the largest matching quantization for duplicate entries", () => {
     const rules: RecommendationRule[] = [
       {
-        ramMin: 32,
-        vramMin: 0,
+        ramMin: 16,
+        vramMin: 8,
         models: [
           {
-            name: M.GLM_4_7_FLASH,
+            name: M.QWEN3_6_27B,
             quantization: Q.Q4_K_XL,
             usage: U.CODING,
           },
         ],
       },
       {
-        ramMin: 64,
-        vramMin: 0,
+        ramMin: 16,
+        vramMin: 24,
         models: [
           {
-            name: M.GLM_4_7_FLASH,
+            name: M.QWEN3_6_27B,
             quantization: Q.Q8_K_XL,
             usage: U.INSTRUCT,
           },
@@ -89,7 +72,7 @@ describe("getMatchingRecommendations", () => {
 
     const [recommendation] = getMatchingRecommendations(64, 40, rules);
 
-    expect(recommendation?.parameters).toBe(30);
+    expect(recommendation?.parameters).toBe(27);
     expect(recommendation?.quantization).toBe(Q.Q8_K_XL);
     expect(recommendation?.usage).toBe(U.CODING | U.INSTRUCT);
   });
@@ -108,33 +91,64 @@ describe("getMatchingRecommendations", () => {
     }
   });
 
-  it("assigns MoE models to RAM-heavy tiers and dense models to VRAM-heavy tiers", () => {
-    const denseRule = DEFAULT_RECOMMENDATION_RULES.find((rule) =>
-      rule.models.some(
-        (candidate) =>
-          candidate.name === M.QWEN3_6_27B &&
-          candidate.quantization === Q.Q4_K_M,
-      ),
-    );
-    const moeRule = DEFAULT_RECOMMENDATION_RULES.find((rule) =>
-      rule.models.some(
-        (candidate) =>
-          candidate.name === M.QWEN3_6_35B_A3B &&
-          candidate.quantization === Q.Q4_K_M,
-      ),
-    );
+  it("filters out dense models that exceed available VRAM", () => {
+    const matches = getMatchingRecommendations(64, 16, DEFAULT_RECOMMENDATION_RULES);
 
-    expect(denseRule).toBeDefined();
-    expect(moeRule).toBeDefined();
+    // Qwen3.6 27B Q4 (15.66 GB + 2 GB min context = 17.66 GB) doesn't fit in 16 GB VRAM (15 GB available)
+    expect(matches.some((item) => item.name === M.QWEN3_6_27B && item.quantization === Q.Q4_K_M)).toBeFalse();
 
-    expect(moeRule!.ramMin).toBeGreaterThanOrEqual(denseRule!.ramMin);
-    expect(moeRule!.vramMin).toBeLessThan(denseRule!.vramMin);
+    // Qwen3.6 27B Q6 (23.18 GB + 2 GB = 25.18 GB) doesn't fit in 16 GB VRAM
+    expect(matches.some((item) => item.name === M.QWEN3_6_27B && item.quantization === Q.Q6_K_XL)).toBeFalse();
+
+    // Gemma 4 31B (17.83 GB + 2 GB = 19.83 GB) doesn't fit in 16 GB VRAM
+    expect(matches.some((item) => item.name === M.GEMMA_4_31B)).toBeFalse();
   });
 
-  it("filters out models that exceed available RAM after system overhead", () => {
+  it("shows only MoE models at 8 GB VRAM (dense models need 12 GB+)", () => {
+    const matches = getMatchingRecommendations(16, 8, DEFAULT_RECOMMENDATION_RULES);
+
+    // LFM2.5 8B A1B (MoE, 4.60 GB file, active 0.57 GB) is the only model at 16:8.
+    // Dense models like Qwen3.5 9B (5.18 GB) and Gemma 4 12B (6.90 GB) are tiered to 12 GB VRAM
+    // because they need file + 3 GB context overhead for practical usage.
+    expect(matches.length).toBe(1);
+    expect(matches[0].name).toBe(M.LFM2_5_8B_A1B);
+  });
+
+  it("shows MoE models via offload when VRAM is small but total memory suffices", () => {
     const matches = getMatchingRecommendations(64, 12, DEFAULT_RECOMMENDATION_RULES);
 
-    expect(matches.some((item) => item.name === M.QWEN3_5_122B_A10B)).toBeFalse();
+    // Gemma 4 26B A4B: 15.78 GB + 3 GB = 18.78 GB total needed
+    // Available: 52 GB RAM + 11.25 GB VRAM = 63.25 GB ≥ 18.78 GB → fits via offload
+    expect(matches.some((item) => item.name === M.GEMMA_4_26B_A4B)).toBeTrue();
+
+    // Qwen3.6 35B A3B: 20.61 GB + 3 GB = 23.61 GB total needed
+    // 63.25 GB ≥ 23.61 GB → fits via offload
+    expect(matches.some((item) => item.name === M.QWEN3_6_35B_A3B)).toBeTrue();
+
+    // Qwen3 Coder Next: 45.92 GB + 3 GB = 48.92 GB total needed
+    // 63.25 GB ≥ 48.92 GB → fits via offload
+    expect(matches.some((item) => item.name === M.QWEN3_CODER_NEXT)).toBeTrue();
+  });
+
+  it("filters out MoE models when total system memory is insufficient", () => {
+    const matches = getMatchingRecommendations(32, 12, DEFAULT_RECOMMENDATION_RULES);
+
+    // Qwen3 Coder Next: 45.92 GB + 3 GB = 48.92 GB total needed
+    // 32 GB RAM (24 GB available) + 12 GB VRAM (11.25 GB available) = 35.25 GB total < 48.92 GB → filtered
+    expect(matches.some((item) => item.name === M.QWEN3_CODER_NEXT)).toBeFalse();
+
+    // Gemma 4 26B A4B: 15.78 GB + 3 GB = 18.78 GB total needed
+    // 35.25 GB total ≥ 18.78 GB → still fits
+    expect(matches.some((item) => item.name === M.GEMMA_4_26B_A4B)).toBeTrue();
+  });
+
+  it("filters MoE models when VRAM is too small for active params + context", () => {
+    const matches = getMatchingRecommendations(64, 8, DEFAULT_RECOMMENDATION_RULES);
+
+    // Qwen3 Coder Next: active 3B at Q4_K_M = 1.72 GB + 2 GB min context = 3.72 GB
+    // 8 GB VRAM (7.5 GB available) ≥ 3.72 GB → VRAM check passes
+    // Total: 45.92 + 3 = 48.92 GB, available: 52 + 7.5 = 59.5 GB → fits
+    expect(matches.some((item) => item.name === M.QWEN3_CODER_NEXT)).toBeTrue();
   });
 
   it("contains generated hardware tiers for every currently defined model", () => {
@@ -169,7 +183,7 @@ describe("getMatchingRecommendations", () => {
 });
 
 describe("calculateFileSizeGb", () => {
-  it("estimates non-vision file sizes within 8% of verified Hugging Face GGUF sizes", () => {
+  it("estimates file sizes within 8% of verified Hugging Face GGUF sizes", () => {
     const TOLERANCE = 0.08;
 
     for (const entry of ACTUAL_GGUF_SIZES_GB) {
@@ -194,21 +208,5 @@ describe("calculateFileSizeGb", () => {
 
     // Q6_K_XL: K-quant → 1.15x overhead. 16 params * 0.75 bytes * 1.15 = 13.8 GB
     expect(calculateFileSizeGb(16, Q.Q6_K_XL)).toBeCloseTo(13.8, 1);
-  });
-
-  it("adds 1.9 GB adapter overhead for all vision models including Qwen3 VL", () => {
-    const TOLERANCE = 0.08;
-
-    for (const entry of ACTUAL_VISION_SIZES_GB) {
-      const estimated = calculateFileSizeGb(
-        getModelParameterSize(entry.name),
-        entry.quantization,
-        entry.name,
-      );
-      const relativeError =
-        Math.abs(estimated - entry.actualGb) / entry.actualGb;
-
-      expect(relativeError).toBeLessThanOrEqual(TOLERANCE);
-    }
   });
 });

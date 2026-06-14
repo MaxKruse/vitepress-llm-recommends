@@ -39,6 +39,7 @@ const RAM_TIERS_GB = [16, 32, 64] as const;
 const VRAM_TIERS_GB = [8, 12, 16, 24, 32] as const;
 
 const SYSTEM_VRAM_OVERHEAD_GB = 1;
+const CONTEXT_OVERHEAD_GB = 3;
 
 const getSystemRamOverheadGb = (ramTierGb: number): number => {
   if (ramTierGb <= 16) {
@@ -111,41 +112,30 @@ export const USE_CASE_COPY = {
 export type UseCaseKey = keyof typeof USE_CASE_COPY;
 
 const MODEL_RECOMMENDATION_PROFILES = [
-  defineModel(M.QWEN3_CODER_NEXT, {
-    [Q.Q4_K_M]: U.CODING,
+  defineModel(M.QWEN3_5_9B, {
+    [Q.Q4_K_M]: combine(U.STEM, U.CODING, U.VISION),
   }),
-  defineModel(M.GLM_4_7_FLASH, {
-    [Q.Q4_K_M]: combine(U.CODING),
+  defineModel(M.LFM2_5_8B_A1B, {
+    [Q.Q4_K_M]: U.INSTRUCT,
+  }),
+  defineModel(M.GEMMA_4_12B, {
+    [Q.Q4_K_M]: combine(U.INSTRUCT, U.PERSONAL_ASSISTANT),
+  }),
+  defineModel(M.QWEN3_6_35B_A3B, {
+    [Q.Q4_K_M]: combine(U.STEM, U.INSTRUCT, U.CODING, U.VISION),
   }),
   defineModel(M.GEMMA_4_26B_A4B, {
     [Q.Q4_K_M]: combine(U.INSTRUCT, U.STORYWRITING, U.PERSONAL_ASSISTANT),
   }),
-  defineModel(M.QWEN3_6_35B_A3B, {
-    [Q.Q4_K_M]: combine(U.INSTRUCT, U.PERSONAL_ASSISTANT, U.STEM),
-  }),
   defineModel(M.QWEN3_6_27B, {
-    [Q.Q4_K_M]: combine(U.INSTRUCT, U.CODING),
+    [Q.Q4_K_M]: combine(U.INSTRUCT, U.CODING, U.VISION),
+    [Q.Q6_K_XL]: U.CODING,
   }),
-  defineModel(M.QWEN3_5_122B_A10B, {
-    [Q.Q4_K_M]: combine(U.PERSONAL_ASSISTANT, U.STEM, U.CODING),
+  defineModel(M.GEMMA_4_31B, {
+    [Q.Q4_K_M]: combine(U.INSTRUCT, U.STORYWRITING, U.PERSONAL_ASSISTANT),
   }),
-  defineModel(M.GPT_OSS_20B, {
-    [Q.MXFP4]: U.PERSONAL_ASSISTANT,
-  }),
-  defineModel(M.MISTRAL_SMALL_4, {
-    [Q.Q4_K_M]: U.STORYWRITING,
-  }),
-  defineModel(M.QWEN3_VL_32B_INSTRUCT, {
-    [Q.Q6_K_XL]: combine(U.VISION, U.INSTRUCT, U.PERSONAL_ASSISTANT),
-  }),
-  defineModel(M.QWEN3_VL_8B_INSTRUCT, {
-    [Q.Q4_K_M]: combine(U.VISION, U.INSTRUCT),
-  }),
-  defineModel(M.QWEN3_VL_4B_INSTRUCT, {
-    [Q.Q4_K_M]: combine(U.VISION, U.INSTRUCT),
-  }),
-  defineModel(M.QWEN3_4B_INSTRUCT_2507, {
-    [Q.Q8_0]: U.INSTRUCT,
+  defineModel(M.QWEN3_CODER_NEXT, {
+    [Q.Q4_K_M]: U.CODING,
   }),
 ] as const satisfies readonly ModelRecommendationProfile[];
 
@@ -171,17 +161,6 @@ function candidateFromSelection(selection: ModelSelection): ModelCandidate {
   }
 
   return model(selection.name, selection.quantization, usage);
-}
-
-function parseMoeActiveParameters(modelName: string): number | null {
-  const match = modelName.match(/\bA(\d+(?:\.\d+)?)B\b/i);
-  const active = match?.[1];
-
-  if (!active) {
-    return null;
-  }
-
-  return Number.parseFloat(active);
 }
 
 function pickTier(
@@ -224,6 +203,10 @@ function pickRamTier(requiredModelGb: number): number {
   return fallback;
 }
 
+function isMoEModel(modelName: string): boolean {
+  return /\bA\d+B\b/i.test(modelName) || modelName === "Qwen3 Coder Next";
+}
+
 function getTierForSelection(selection: ModelSelection): RecommendationTier {
   const parameters = getModelParameterSize(selection.name);
   const fileSizeGb = calculateFileSizeGb(
@@ -231,24 +214,25 @@ function getTierForSelection(selection: ModelSelection): RecommendationTier {
     selection.quantization,
     selection.name,
   );
-  const moeActiveB = parseMoeActiveParameters(selection.name);
+  const totalGb = fileSizeGb + CONTEXT_OVERHEAD_GB;
 
-  if (moeActiveB !== null && parameters > 0) {
-    const activeRatio = Math.min(Math.max(moeActiveB / parameters, 0), 1);
-    const vramForWeightsGb = Math.max(2, fileSizeGb * activeRatio);
-    const ramForWeightsGb = Math.max(0, fileSizeGb - vramForWeightsGb);
+  if (isMoEModel(selection.name)) {
+    // Tier by total memory (file + context) for offload.
+    // RAM needed: assume minimum VRAM tier contributes, rest comes from RAM.
+    const vramAtMinTier = VRAM_TIERS_GB[0] - SYSTEM_VRAM_OVERHEAD_GB;
+    const ramNeeded = Math.max(0, totalGb - vramAtMinTier);
 
     return {
-      ramMin: pickRamTier(ramForWeightsGb),
-      vramMin: pickTier(vramForWeightsGb, VRAM_TIERS_GB, SYSTEM_VRAM_OVERHEAD_GB),
+      ramMin: pickRamTier(ramNeeded),
+      vramMin: VRAM_TIERS_GB[0], // 8 GB — filter does real offload check
       picks: [selection],
     };
   }
 
+  // Dense: tier by total size (file + context). Model must fit entirely in VRAM.
   return {
-    // Dense models are expected to fully fit inside VRAM.
     ramMin: pickRamTier(0),
-    vramMin: pickTier(fileSizeGb, VRAM_TIERS_GB, SYSTEM_VRAM_OVERHEAD_GB),
+    vramMin: pickTier(totalGb, VRAM_TIERS_GB, SYSTEM_VRAM_OVERHEAD_GB),
     picks: [selection],
   };
 }

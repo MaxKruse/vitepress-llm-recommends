@@ -46,6 +46,8 @@ In this scenario:
 
 Your speeds will be similar to running in a 100% CPU-only mode. While the small active parameter count (e.g., 3B) makes CPU inference faster than you might expect for a 30GB model, you are not getting the full speed benefits of GPU inference.
 
+**Important**: The **entire model file** must fit in your combined RAM + VRAM (minus OS overhead). Having enough VRAM for just the active parameters is not sufficient — the full model is loaded into system memory, with only a portion offloaded to the GPU for faster computation.
+
 ## Can I adjust the number of active experts?
 
 No. Models you download are pre-configured with the **optimal number of active experts**. This number is chosen by the model's creators to provide the best balance of speed and quality.

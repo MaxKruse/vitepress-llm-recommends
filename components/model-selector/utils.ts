@@ -14,7 +14,29 @@ const modelSizeEstimateByKey = new Map(
   ]),
 );
 
-const SYSTEM_VRAM_OVERHEAD_GB = 1;
+const CONTEXT_OVERHEAD_GB = 3;
+// Minimum free VRAM after loading model weights so context can be used.
+// 2 GB supports a practical ~4K–8K token context at Q4 precision.
+const MIN_FREE_FOR_CONTEXT_GB = 2;
+
+// Display priority for model sorting (lower number = higher rank).
+const MODEL_DISPLAY_PRIORITY: Record<string, number> = {
+  "Qwen3.6 27B": 0,
+  "Qwen3 Coder Next": 1,
+  "Qwen3.6 35B A3B": 2,
+  "Gemma 4 31B": 3,
+  "Gemma 4 26B A4B": 4,
+  "Gemma 4 12B": 5,
+  "Qwen3.5 9B": 6,
+  "LFM2.5 8B A1B": 7,
+};
+
+function getSystemVramOverheadGb(totalVramGb: number): number {
+  // Smaller GPUs reserve less for the desktop environment.
+  if (totalVramGb <= 8) return 0.5;
+  if (totalVramGb <= 12) return 0.75;
+  return 1;
+}
 
 function getSystemRamOverheadGb(totalRamGb: number): number {
   if (totalRamGb <= 16) {
@@ -73,13 +95,12 @@ export function getQuantizationLevel(quantization: string): number {
 }
 
 export function hasVisionAdapter(modelName: string): boolean {
-  return /mistral\s*small|gemma\s*3|qwen3\s*vl/i.test(modelName);
+  return /qwen3\s*vl/i.test(modelName);
 }
 
 function getVisionAdapterSize(modelName: string): number {
-  // All vision-capable models ship a separate mmproj adapter file that must be
-  // loaded alongside the base GGUF. Adapters range from ~800 MB to ~1.9 GB;
-  // we use the upper bound to avoid under-estimating VRAM requirements.
+  // Separate mmproj adapter files must be loaded alongside the base GGUF.
+  // Adapters range from ~800 MB to ~1.9 GB; we use the upper bound.
   if (hasVisionAdapter(modelName)) {
     return 1.9;
   }
@@ -146,42 +167,16 @@ function shouldReplaceExisting(
   return next.parameters > current.parameters;
 }
 
-function parseMoeActiveParameters(modelName: string): number | null {
-  const match = modelName.match(/\bA(\d+(?:\.\d+)?)B\b/i);
-  const active = match?.[1];
-
-  if (!active) {
-    return null;
-  }
-
-  return Number.parseFloat(active);
+function isMoEModel(modelName: string): boolean {
+  return /\bA\d+B\b/i.test(modelName) || modelName === "Qwen3 Coder Next";
 }
 
-function getRequiredMemorySplitGb(
-  model: AggregatedRecommendation,
-): { ramGb: number; vramGb: number } {
-  const fileSizeGb = calculateFileSizeGb(
-    model.parameters,
-    model.quantization,
-    model.name,
-  );
-  const moeActiveB = parseMoeActiveParameters(model.name);
+function getMoeActiveParamsB(modelName: string): number | null {
+  const match = modelName.match(/\bA(\d+(?:\.\d+)?)B\b/i);
+  if (match?.[1]) return Number.parseFloat(match[1]);
 
-  if (moeActiveB !== null && model.parameters > 0) {
-    const activeRatio = Math.min(Math.max(moeActiveB / model.parameters, 0), 1);
-    const vramForWeightsGb = Math.max(2, fileSizeGb * activeRatio);
-    const ramForWeightsGb = Math.max(0, fileSizeGb - vramForWeightsGb);
-
-    return {
-      ramGb: ramForWeightsGb,
-      vramGb: vramForWeightsGb,
-    };
-  }
-
-  return {
-    ramGb: 0,
-    vramGb: fileSizeGb,
-  };
+  if (modelName === "Qwen3 Coder Next") return 3;
+  return null;
 }
 
 function canFitWithinHardware(
@@ -189,11 +184,37 @@ function canFitWithinHardware(
   totalRamGb: number,
   totalVramGb: number,
 ): boolean {
+  const fileSizeGb = calculateFileSizeGb(
+    model.parameters,
+    model.quantization,
+    model.name,
+  );
+  const totalGb = fileSizeGb + CONTEXT_OVERHEAD_GB;
+  const availableVramGb = Math.max(0, totalVramGb - getSystemVramOverheadGb(totalVramGb));
   const availableRamGb = Math.max(0, totalRamGb - getSystemRamOverheadGb(totalRamGb));
-  const availableVramGb = Math.max(0, totalVramGb - SYSTEM_VRAM_OVERHEAD_GB);
-  const required = getRequiredMemorySplitGb(model);
 
-  return availableRamGb >= required.ramGb && availableVramGb >= required.vramGb;
+  if (isMoEModel(model.name)) {
+    // MoE: entire file loads into RAM+VRAM combined. Only active experts + context
+    // must fit in VRAM for the GPU offload to be useful.
+    const activeB = getMoeActiveParamsB(model.name);
+    const quantLevel = getQuantizationLevel(model.quantization);
+    const quantOverhead = /K_/i.test(model.quantization) ? 1.15 : 1.0;
+    const activeGb = activeB !== null
+      ? activeB * (quantLevel / 8) * quantOverhead
+      : fileSizeGb;
+
+    // Check 1: total RAM+VRAM must hold the full model + context
+    const totalAvailable = availableRamGb + availableVramGb;
+    if (totalAvailable < totalGb) {
+      return false;
+    }
+
+    // Check 2: active params + minimal context must fit in VRAM for offload
+    return availableVramGb >= activeGb + MIN_FREE_FOR_CONTEXT_GB;
+  }
+
+  // Dense: model must fit in VRAM with room for at least minimal context.
+  return availableVramGb >= fileSizeGb + MIN_FREE_FOR_CONTEXT_GB;
 }
 
 export function getMatchingRecommendations(
@@ -237,10 +258,21 @@ export function getMatchingRecommendations(
   }
 
   return [...aggregated.values()].sort((left, right) => {
-    if (right.parameters !== left.parameters) {
-      return right.parameters - left.parameters;
+    const leftPriority = MODEL_DISPLAY_PRIORITY[left.name];
+    const rightPriority = MODEL_DISPLAY_PRIORITY[right.name];
+
+    // Custom priority order (lower number = higher rank)
+    if (leftPriority !== undefined && rightPriority !== undefined) {
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+    } else if (leftPriority !== undefined) {
+      return -1;
+    } else if (rightPriority !== undefined) {
+      return 1;
     }
 
+    // Within same model: prefer higher quantization
     const rightQuantizationLevel = getQuantizationLevel(right.quantization);
     const leftQuantizationLevel = getQuantizationLevel(left.quantization);
 
