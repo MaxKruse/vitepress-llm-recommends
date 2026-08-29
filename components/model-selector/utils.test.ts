@@ -1,7 +1,8 @@
 import { describe, expect, it } from "bun:test";
 
-import { MODEL_NAMES as M, getModelParameterSize } from "./constants/models";
+import { MODEL_NAMES as M, MODEL_TO_HF_MAPPING, getModelParameterSize } from "./constants/models";
 import type { ModelName } from "./constants/models";
+import { MODEL_SIZE_ESTIMATES_GB } from "./constants/model-size-estimates";
 import { QUANTIZATIONS as Q } from "./constants/quantizations";
 import { RECOMMENDED_USAGE as U } from "./constants/usage";
 import { DEFAULT_RECOMMENDATION_RULES } from "./recommendations";
@@ -234,5 +235,56 @@ describe("calculateFileSizeGb", () => {
 
     // Q6_K_XL: K-quant → 1.15x overhead. 16 params * 0.75 bytes * 1.15 = 13.8 GB
     expect(calculateFileSizeGb(16, Q.Q6_K_XL)).toBeCloseTo(13.8, 1);
+  });
+});
+
+describe("catalog consistency", () => {
+  it("measures a size for every recommended model and quantization", () => {
+    const sizeKeys = new Set(
+      MODEL_SIZE_ESTIMATES_GB.map(
+        (entry) => `${entry.name}|${entry.quantization}`,
+      ),
+    );
+
+    for (const rule of DEFAULT_RECOMMENDATION_RULES) {
+      for (const candidate of rule.models) {
+        expect(
+          sizeKeys.has(`${candidate.name}|${candidate.quantization}`),
+          `${candidate.name} ${candidate.quantization} is missing from MODEL_SIZE_ESTIMATES_GB`,
+        ).toBeTrue();
+      }
+    }
+  });
+
+  it("does not measure sizes for models that are not recommended", () => {
+    const ruleKeys = new Set(
+      DEFAULT_RECOMMENDATION_RULES.flatMap((rule) =>
+        rule.models.map(
+          (candidate) => `${candidate.name}|${candidate.quantization}`,
+        ),
+      ),
+    );
+
+    for (const entry of MODEL_SIZE_ESTIMATES_GB) {
+      expect(
+        ruleKeys.has(`${entry.name}|${entry.quantization}`),
+        `${entry.name} ${entry.quantization} has a size entry but no recommendation profile`,
+      ).toBeTrue();
+    }
+  });
+
+  it("maps every recommended model to a Hugging Face repo", () => {
+    const recommendedNames = new Set(
+      DEFAULT_RECOMMENDATION_RULES.flatMap((rule) =>
+        rule.models.map((candidate) => candidate.name),
+      ),
+    );
+
+    for (const name of recommendedNames) {
+      expect(
+        MODEL_TO_HF_MAPPING[name],
+        `${name} is missing from MODEL_TO_HF_MAPPING`,
+      ).toBeDefined();
+    }
   });
 });
