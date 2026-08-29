@@ -16,10 +16,12 @@ Use the selector below to find hardware-based model picks quickly. Enter your RA
 
 For all models, the following assumptions are made:
 
-- **OS**: Windows 10/11, meaning 1GB VRAM overhead + 6/8/12GB RAM overhead for the system (16/32/64GB total RAM).
+- **OS**: Windows 10/11, meaning 1GB VRAM overhead + 6/8/12GB RAM overhead for the system (16/32/64/128GB total RAM).
 - **Inference Settings**: Recommended as per the model developers, with **no** KV-Cache quantization.
 - **Context Size**: 32K Tokens. Enough to get small things done, and on most modern models not prohibitively large.
 - **Usage**: Chat-only. No agentic usecases.
+
+**Partial offload**: a model that does not fit entirely in VRAM is still recommended when it fits in your combined RAM + VRAM. llama.cpp (`--fit on`) splits the layers between GPU and system RAM - such a model runs, but every layer kept in RAM slows token generation, so a fully-VRAM-resident model is the fast experience.
 
 ## Use-case guides
 
