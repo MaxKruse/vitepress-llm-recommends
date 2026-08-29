@@ -87,7 +87,7 @@ describe("getMatchingRecommendations", () => {
     }
   });
 
-  it("shows dense models that exceed VRAM when combined RAM + VRAM suffices", () => {
+  it("hides dense models that exceed VRAM even when combined RAM + VRAM suffices", () => {
     const matches = getMatchingRecommendations(
       64,
       16,
@@ -95,34 +95,65 @@ describe("getMatchingRecommendations", () => {
     );
 
     // Qwen3.8 27B Q4_K_M: 16.20 GB file + 3 GB context = 19.20 GB.
-    // It does not fit in 16 GB VRAM (15 GB available), but combined
+    // It does not fit in 16 GB VRAM (15 GB available). Combined
     // 64 GB RAM (52 GB available) + 16 GB VRAM (15 GB available) = 67 GB
-    // holds it, so llama.cpp offloads the overflow layers to RAM.
-    expect(matches.some((item) => item.name === M.QWEN3_8_27B)).toBeTrue();
+    // holds it physically, but a dense model with layers in RAM stalls
+    // over PCIe on every token, so it is not recommended.
+    expect(matches.some((item) => item.name === M.QWEN3_8_27B)).toBeFalse();
 
-    const tiny = getMatchingRecommendations(
-      16,
-      8,
+    // Muse Glimmer 30B Q4_K_XL: 18.37 + 3 = 21.37 GB > 15 GB VRAM - hidden.
+    expect(matches.some((item) => item.name === M.MUSE_GLIMMER_30B)).toBeFalse();
+
+    // Gemma 4 12B: 6.79 + 3 = 9.79 GB <= 15 GB - fully GPU-resident, shown.
+    expect(matches.some((item) => item.name === M.GEMMA_4_12B)).toBeTrue();
+
+    // Qwen3.6 35B A3B (MoE) fits the same rig: only 3B are active per
+    // token, so idle experts can sit in system RAM.
+    expect(matches.some((item) => item.name === M.QWEN3_6_35B_A3B)).toBeTrue();
+  });
+
+  it("shows dense models when weights and context fit entirely in VRAM", () => {
+    const atTwentyFour = getMatchingRecommendations(
+      64,
+      24,
       DEFAULT_RECOMMENDATION_RULES,
     );
 
-    // At 16 GB RAM + 8 GB VRAM only 17.5 GB is usable: 19.20 GB does not fit.
-    expect(tiny.some((item) => item.name === M.QWEN3_8_27B)).toBeFalse();
+    // Qwen3.8 27B Q4_K_M: 19.20 GB <= 23 GB available on a 24 GB card.
+    // Q6_K_XL (27.43 GB) still exceeds 23 GB, so the Q4 candidate is the
+    // one surfaced.
+    const qwenAtTwentyFour = atTwentyFour.find(
+      (item) => item.name === M.QWEN3_8_27B,
+    );
+    expect(qwenAtTwentyFour?.quantization).toBe(Q.Q4_K_M);
+
+    const atThirtyTwo = getMatchingRecommendations(
+      64,
+      32,
+      DEFAULT_RECOMMENDATION_RULES,
+    );
+
+    // 32 GB card (31 GB available): Q6_K_XL (27.43 GB) now fits too, so
+    // the aggregated entry prefers the higher quantization.
+    const qwenAtThirtyTwo = atThirtyTwo.find(
+      (item) => item.name === M.QWEN3_8_27B,
+    );
+    expect(qwenAtThirtyTwo?.quantization).toBe(Q.Q6_K_XL);
   });
 
-  it("shows the low-RAM tier models at 16 GB RAM + 8 GB VRAM", () => {
+  it("shows only the MoE pick at 16 GB RAM + 8 GB VRAM", () => {
     const matches = getMatchingRecommendations(
       16,
       8,
       DEFAULT_RECOMMENDATION_RULES,
     );
 
-    // LFM2.5 8B A1B (MoE, 4.60 GB) runs fast with 1B active via offload.
-    // Gemma 4 12B (dense, 7.06 GB) exceeds 8 GB VRAM but fits in combined
-    // memory (10.06 GB ≤ 17.5 GB), so it is shown via offload.
-    expect(matches.length).toBe(2);
-    const names = matches.map((item) => item.name).sort();
-    expect(names).toEqual([M.GEMMA_4_12B, M.LFM2_5_8B_A1B].sort());
+    // LFM2.5 8B A1B (MoE, 4.96 GB, 1B active) runs fast with idle experts
+    // in system RAM. Gemma 4 12B (dense, 9.79 GB) does not fit in 8 GB
+    // VRAM (7.5 GB available); even though 17.5 GB combined memory holds
+    // it, a dense model is not recommended partially offloaded.
+    expect(matches.length).toBe(1);
+    expect(matches[0]?.name).toBe(M.LFM2_5_8B_A1B);
   });
 
   it("shows MoE models via offload when VRAM is small but total memory suffices", () => {
@@ -161,10 +192,13 @@ describe("getMatchingRecommendations", () => {
     expect(matches.some((item) => item.name === M.GEMMA_4_26B_A4B)).toBeTrue();
   });
 
-  it("recommends models on every rig where they physically fit, even below the old tier floors", () => {
-    // 16 GB RAM (10 GB usable) + 24 GB VRAM (23 GB usable) = 33 GB usable.
-    // Qwen3.8 27B Q6_K_XL needs 24.43 + 3 = 27.43 GB - it fits via offload,
-    // even though 16 GB RAM is below the old derived tier floor of 32 GB.
+  it("recommends dense models on big-VRAM rigs even with small system RAM", () => {
+    // 16 GB RAM (10 GB usable) + 24 GB VRAM (23 GB usable).
+    // Every dense pick fits entirely in VRAM:
+    // - Gemma 4 12B: 6.79 + 3 = 9.79 GB
+    // - Qwen3.8 27B Q4_K_M: 16.20 + 3 = 19.20 GB
+    // - Muse Glimmer 30B Q4_K_XL: 18.37 + 3 = 21.37 GB
+    // 27B Q6_K_XL (27.43 GB) exceeds 23 GB, so 27B surfaces as Q4_K_M.
     const atSixteenByTwentyFour = getMatchingRecommendations(
       16,
       24,
@@ -183,8 +217,14 @@ describe("getMatchingRecommendations", () => {
     expect(namesAtSixteenByTwentyFour.has(M.GEMMA_4_12B)).toBeTrue();
     expect(namesAtSixteenByTwentyFour.has(M.LFM2_5_8B_A1B)).toBeTrue();
     expect(namesAtSixteenByTwentyFour.has(M.QWEN3_8_FLASH_NEXT)).toBeFalse();
+    expect(
+      atSixteenByTwentyFour.find(
+        (item) => item.name === M.QWEN3_8_27B,
+      )?.quantization,
+    ).toBe(Q.Q4_K_M);
 
-    // 16 GB RAM (10 GB usable) + 32 GB VRAM (31 GB usable) = 41 GB usable.
+    // 16 GB RAM + 32 GB VRAM (31 GB usable): Q6_K_XL (27.43 GB) fits in
+    // VRAM, so 27B surfaces at the higher quantization.
     const atSixteenByThirtyTwo = getMatchingRecommendations(
       16,
       32,
@@ -193,10 +233,10 @@ describe("getMatchingRecommendations", () => {
 
     expect(atSixteenByThirtyTwo).toHaveLength(6);
     expect(
-      atSixteenByThirtyTwo.some(
+      atSixteenByThirtyTwo.find(
         (item) => item.name === M.QWEN3_8_27B,
-      ),
-    ).toBeTrue();
+      )?.quantization,
+    ).toBe(Q.Q6_K_XL);
   });
 
   it("keeps Flash-Next below its mandatory 128 GB RAM + 32 GB VRAM floor", () => {
@@ -221,8 +261,8 @@ describe("getMatchingRecommendations", () => {
       DEFAULT_RECOMMENDATION_RULES,
     );
 
-    // Qwen3.6 35B A3B: active 3B at Q4_K_M = 1.73 GB + 2 GB min context = 3.73 GB
-    // 8 GB VRAM (7.5 GB available) ≥ 3.73 GB → VRAM check passes
+    // Qwen3.6 35B A3B: active 3B at Q4_K_M = 1.73 GB + 3 GB context = 4.73 GB
+    // 8 GB VRAM (7.5 GB available) ≥ 4.73 GB → VRAM check passes
     // Total: 21.45 + 3 = 24.45 GB, available: 52 + 7.5 = 59.5 GB → fits
     expect(matches.some((item) => item.name === M.QWEN3_6_35B_A3B)).toBeTrue();
   });

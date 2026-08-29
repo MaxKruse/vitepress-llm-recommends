@@ -14,10 +14,9 @@ const modelSizeEstimateByKey = new Map(
   ]),
 );
 
+// KV cache + runtime headroom for the documented 32K context assumption
+// (no KV-cache quantization), applied on top of the model file size.
 const CONTEXT_OVERHEAD_GB = 3;
-// Minimum free VRAM after loading model weights so context can be used.
-// 2 GB supports a practical ~4K–8K token context at Q4 precision.
-const MIN_FREE_FOR_CONTEXT_GB = 2;
 
 // Display priority for model sorting (lower number = higher rank).
 const MODEL_DISPLAY_PRIORITY: Record<string, number> = {
@@ -164,6 +163,22 @@ function getMoeActiveParamsB(modelName: string): number | null {
   return null;
 }
 
+function getActiveParameterGb(model: AggregatedRecommendation): number {
+  const activeB = getMoeActiveParamsB(model.name);
+
+  // Unknown active parameter count: be conservative and require the whole
+  // file to sit in VRAM, like a dense model.
+  if (activeB === null) {
+    return calculateFileSizeGb(model.parameters, model.quantization, model.name);
+  }
+
+  return (
+    activeB *
+    (getQuantizationLevel(model.quantization) / 8) *
+    getQuantizationOverhead(model.quantization)
+  );
+}
+
 function canFitWithinHardware(
   model: AggregatedRecommendation,
   totalRamGb: number,
@@ -179,29 +194,26 @@ function canFitWithinHardware(
   const availableRamGb = Math.max(0, totalRamGb - getSystemRamOverheadGb(totalRamGb));
 
   if (isMoEModel(model.name)) {
-    // MoE: entire file loads into RAM+VRAM combined. Only active experts + context
-    // must fit in VRAM for the GPU offload to be useful.
-    const activeB = getMoeActiveParamsB(model.name);
-    const quantLevel = getQuantizationLevel(model.quantization);
-    const quantOverhead = /K_/i.test(model.quantization) ? 1.15 : 1.0;
-    const activeGb = activeB !== null
-      ? activeB * (quantLevel / 8) * quantOverhead
-      : fileSizeGb;
-
-    // Check 1: total RAM+VRAM must hold the full model + context
-    const totalAvailable = availableRamGb + availableVramGb;
-    if (totalAvailable < totalGb) {
+    // MoE: the entire file loads into RAM + VRAM combined, but only the
+    // active experts are touched per token. Two things must hold:
+    // 1. Full file + context fits in RAM + VRAM combined.
+    // 2. Active parameters + context fit in VRAM, so the GPU handles the
+    //    hot path while idle experts sit in system RAM (llama.cpp
+    //    `--fit on`). Speed then tracks the small active size, not the
+    //    total model size.
+    if (availableRamGb + availableVramGb < totalGb) {
       return false;
     }
 
-    // Check 2: active params + minimal context must fit in VRAM for offload
-    return availableVramGb >= activeGb + MIN_FREE_FOR_CONTEXT_GB;
+    return availableVramGb >= getActiveParameterGb(model) + CONTEXT_OVERHEAD_GB;
   }
 
-  // Dense: the full file must fit in RAM+VRAM combined. llama.cpp splits
-  // layers between GPU and system RAM, so the model runs even when it
-  // exceeds VRAM - just slower, since every active layer in RAM bounds speed.
-  return availableRamGb + availableVramGb >= totalGb;
+  // Dense: every parameter is active for every token, so each layer left
+  // in system RAM stalls token generation over PCIe. Benchmarks show a
+  // steep cliff: any CPU-resident layer drops throughput to a fraction of
+  // full-GPU speed, so a dense model is only recommended when weights +
+  // context fit entirely in VRAM.
+  return availableVramGb >= totalGb;
 }
 
 export function getMatchingRecommendations(
