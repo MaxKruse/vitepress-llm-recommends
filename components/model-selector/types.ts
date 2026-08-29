@@ -7,11 +7,17 @@ export interface ModelCandidate {
   parameters?: number;
   quantization: Quantization;
   usage: RecommendedUsageMask;
+  /**
+   * Mandatory minimum RAM (GB) for this model, independent of whether it
+   * physically fits. Only set where usability demands more than the file
+   * size (e.g. Flash-Next).
+   */
+  ramMin?: number;
+  /** Mandatory minimum VRAM (GB) for this model. */
+  vramMin?: number;
 }
 
 export interface RecommendationRule {
-  ramMin: number;
-  vramMin: number;
   models: ModelCandidate[];
 }
 

@@ -212,12 +212,15 @@ export function getMatchingRecommendations(
   const aggregated = new Map<string, AggregatedRecommendation>();
 
   for (const rule of rules) {
-    if (ram < rule.ramMin || vram < rule.vramMin) {
-      continue;
-    }
-
     for (const candidate of rule.models) {
       const model = resolveModelCandidate(candidate);
+
+      if (
+        (model.ramMin !== undefined && ram < model.ramMin) ||
+        (model.vramMin !== undefined && vram < model.vramMin)
+      ) {
+        continue;
+      }
 
       if (!canFitWithinHardware(model, ram, vram)) {
         continue;

@@ -47,8 +47,6 @@ describe("getMatchingRecommendations", () => {
   it("derives parameter size from the model name and prefers the largest matching quantization for duplicate entries", () => {
     const rules: RecommendationRule[] = [
       {
-        ramMin: 16,
-        vramMin: 8,
         models: [
           {
             name: M.QWEN3_8_27B,
@@ -58,8 +56,6 @@ describe("getMatchingRecommendations", () => {
         ],
       },
       {
-        ramMin: 16,
-        vramMin: 24,
         models: [
           {
             name: M.QWEN3_8_27B,
@@ -165,6 +161,59 @@ describe("getMatchingRecommendations", () => {
     expect(matches.some((item) => item.name === M.GEMMA_4_26B_A4B)).toBeTrue();
   });
 
+  it("recommends models on every rig where they physically fit, even below the old tier floors", () => {
+    // 16 GB RAM (10 GB usable) + 24 GB VRAM (23 GB usable) = 33 GB usable.
+    // Qwen3.8 27B Q6_K_XL needs 24.43 + 3 = 27.43 GB - it fits via offload,
+    // even though 16 GB RAM is below the old derived tier floor of 32 GB.
+    const atSixteenByTwentyFour = getMatchingRecommendations(
+      16,
+      24,
+      DEFAULT_RECOMMENDATION_RULES,
+    );
+
+    const namesAtSixteenByTwentyFour = new Set(
+      atSixteenByTwentyFour.map((item) => item.name),
+    );
+
+    expect(atSixteenByTwentyFour).toHaveLength(6);
+    expect(namesAtSixteenByTwentyFour.has(M.QWEN3_8_27B)).toBeTrue();
+    expect(namesAtSixteenByTwentyFour.has(M.MUSE_GLIMMER_30B)).toBeTrue();
+    expect(namesAtSixteenByTwentyFour.has(M.GEMMA_4_26B_A4B)).toBeTrue();
+    expect(namesAtSixteenByTwentyFour.has(M.QWEN3_6_35B_A3B)).toBeTrue();
+    expect(namesAtSixteenByTwentyFour.has(M.GEMMA_4_12B)).toBeTrue();
+    expect(namesAtSixteenByTwentyFour.has(M.LFM2_5_8B_A1B)).toBeTrue();
+    expect(namesAtSixteenByTwentyFour.has(M.QWEN3_8_FLASH_NEXT)).toBeFalse();
+
+    // 16 GB RAM (10 GB usable) + 32 GB VRAM (31 GB usable) = 41 GB usable.
+    const atSixteenByThirtyTwo = getMatchingRecommendations(
+      16,
+      32,
+      DEFAULT_RECOMMENDATION_RULES,
+    );
+
+    expect(atSixteenByThirtyTwo).toHaveLength(6);
+    expect(
+      atSixteenByThirtyTwo.some(
+        (item) => item.name === M.QWEN3_8_27B,
+      ),
+    ).toBeTrue();
+  });
+
+  it("keeps Flash-Next below its mandatory 128 GB RAM + 32 GB VRAM floor", () => {
+    // 128 GB RAM (116 GB usable) + 8 GB VRAM (7.5 GB usable) = 123.5 GB usable,
+    // which physically holds the 107.55 GB total. The mandatory floor still
+    // excludes this rig: below 32 GB VRAM the model is not usable in practice.
+    const matches = getMatchingRecommendations(
+      128,
+      8,
+      DEFAULT_RECOMMENDATION_RULES,
+    );
+
+    expect(
+      matches.some((item) => item.name === M.QWEN3_8_FLASH_NEXT),
+    ).toBeFalse();
+  });
+
   it("passes MoE models whose active parameters fit in VRAM for offload", () => {
     const matches = getMatchingRecommendations(
       64,
@@ -178,7 +227,7 @@ describe("getMatchingRecommendations", () => {
     expect(matches.some((item) => item.name === M.QWEN3_6_35B_A3B)).toBeTrue();
   });
 
-  it("contains generated hardware tiers for every currently defined model", () => {
+  it("contains a recommendation for every currently defined model and quantization", () => {
     const availableEntries = new Set(
       DEFAULT_RECOMMENDATION_RULES.flatMap((rule) =>
         rule.models.map(
