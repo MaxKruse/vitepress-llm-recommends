@@ -21,7 +21,7 @@ For all models, the following assumptions are made:
 - **Context Size**: 32K Tokens. Enough to get small things done, and on most modern models not prohibitively large.
 - **Usage**: Chat-only. No agentic usecases.
 
-**Partial offload**: a model that does not fit entirely in VRAM is still recommended when it fits in your combined RAM + VRAM. llama.cpp (`--fit on`) splits the layers between GPU and system RAM - such a model runs, but every layer kept in RAM slows token generation, so a fully-VRAM-resident model is the fast experience.
+**Partial offload (MoE only)**: MoE models are recommended even when only part of them fits in VRAM. The whole file must still fit in combined RAM + VRAM, but llama.cpp (`--fit on`) keeps the small active expert set in VRAM and parks the idle experts in system RAM, so speed tracks the active size, not the total size. Dense models are the opposite: every parameter is active for every token, and any layer left in RAM stalls token generation over PCIe, degrading the model to near CPU-only speed. Dense picks therefore only appear when weights + context fit entirely in VRAM.
 
 ## Use-case guides
 
