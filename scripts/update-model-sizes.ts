@@ -13,83 +13,64 @@ import { resolve } from "node:path";
 // Model catalogue — mirrors MODEL_RECOMMENDATION_PROFILES in recommendations.ts
 // ---------------------------------------------------------------------------
 
-const VISION_ADAPTER_GB = 1.9;
-
 type ModelEntry = {
   /** Display name used in the fixture (matches MODEL_NAMES values) */
   name: string;
-  /** Hugging Face repo, e.g. "unsloth/Qwen3.6-27B-GGUF" */
+  /** Hugging Face repo, e.g. "unsloth/Qwen3.8-27B-GGUF" */
   repo: string;
   /** Quantization string, e.g. "Q4_K_M" */
   quantization: string;
-  /** True if this model ships a separate vision adapter file */
-  isVision?: boolean;
+  /** BF16 mmproj adapter size in GB, added to the GGUF size - 0 for text-only models */
+  adapterGb?: number;
 };
 
 const MODELS: ModelEntry[] = [
   {
-    name: "Qwen3 Coder Next",
-    repo: "unsloth/Qwen3-Coder-Next-GGUF",
+    name: "LFM2.5 8B A1B",
+    repo: "unsloth/LFM2.5-8B-A1B-GGUF",
     quantization: "Q4_K_M",
   },
   {
-    name: "GLM 4.7 Flash",
-    repo: "unsloth/GLM-4.7-Flash-GGUF",
+    name: "Gemma 4 12B",
+    repo: "unsloth/gemma-4-12b-it-GGUF",
     quantization: "Q4_K_M",
+    adapterGb: 0.16,
   },
   {
     name: "Gemma 4 26B A4B",
-    repo: "unsloth/gemma-4-26b-a4b-it-GGUF",
+    repo: "unsloth/gemma-4-26B-A4B-it-GGUF",
     quantization: "Q4_K_M",
+    adapterGb: 1.11,
+  },
+  {
+    name: "Muse Glimmer 30B",
+    repo: "unsloth/Muse-Glimmer-30B-GGUF",
+    quantization: "Q4_K_XL",
+    adapterGb: 3.58,
   },
   {
     name: "Qwen3.6 35B A3B",
     repo: "unsloth/Qwen3.6-35B-A3B-GGUF",
     quantization: "Q4_K_M",
+    adapterGb: 0.84,
   },
   {
-    name: "Qwen3.6 27B",
-    repo: "unsloth/Qwen3.6-27B-GGUF",
+    name: "Qwen3.8 27B",
+    repo: "unsloth/Qwen3.8-27B-GGUF",
     quantization: "Q4_K_M",
+    adapterGb: 0.87,
   },
   {
-    name: "Qwen3.5 122B A10B",
-    repo: "unsloth/Qwen3.5-122B-A10B-GGUF",
-    quantization: "Q4_K_M",
-  },
-  {
-    name: "GPT OSS 20B",
-    repo: "lmstudio-community/gpt-oss-20b-GGUF",
-    quantization: "MXFP4",
-  },
-  {
-    name: "Mistral Small 4",
-    repo: "unsloth/Mistral-Small-4-119B-2603-GGUF",
-    quantization: "Q4_K_M",
-  },
-  {
-    name: "Qwen3 4B Instruct 2507",
-    repo: "unsloth/Qwen3-4B-Instruct-2507-GGUF",
-    quantization: "Q8_0",
-  },
-  // Vision models (GGUF size only; adapter is added separately)
-  {
-    name: "Qwen3 VL 32B Instruct",
-    repo: "unsloth/Qwen3-VL-32B-Instruct-GGUF",
+    name: "Qwen3.8 27B",
+    repo: "unsloth/Qwen3.8-27B-GGUF",
     quantization: "Q6_K_XL",
-    isVision: true,
+    adapterGb: 0.87,
   },
   {
-    name: "Qwen3 VL 8B Instruct",
-    repo: "unsloth/Qwen3-VL-8B-Instruct-GGUF",
-    quantization: "Q4_K_M",
-    isVision: true,
-  },
-  {
-    name: "Qwen3 VL 4B Instruct",
-    repo: "unsloth/Qwen3-VL-4B-Instruct-GGUF",
-    quantization: "Q4_K_M",
-    isVision: true,
+    name: "Qwen3.8-Flash-Next",
+    repo: "unsloth/Qwen3.8-Flash-Next-GGUF",
+    quantization: "Q4_K_XL",
+    adapterGb: 0.85,
   },
 ];
 
@@ -98,18 +79,13 @@ const MODELS: ModelEntry[] = [
 // ---------------------------------------------------------------------------
 
 const MODEL_NAME_TO_TS_KEY: Record<string, string> = {
-  "Qwen3 Coder Next": "M.QWEN3_CODER_NEXT",
-  "GLM 4.7 Flash": "M.GLM_4_7_FLASH",
+  "LFM2.5 8B A1B": "M.LFM2_5_8B_A1B",
+  "Gemma 4 12B": "M.GEMMA_4_12B",
   "Gemma 4 26B A4B": "M.GEMMA_4_26B_A4B",
+  "Muse Glimmer 30B": "M.MUSE_GLIMMER_30B",
   "Qwen3.6 35B A3B": "M.QWEN3_6_35B_A3B",
-  "Qwen3.6 27B": "M.QWEN3_6_27B",
-  "Qwen3.5 122B A10B": "M.QWEN3_5_122B_A10B",
-  "GPT OSS 20B": "M.GPT_OSS_20B",
-  "Mistral Small 4": "M.MISTRAL_SMALL_4",
-  "Qwen3 4B Instruct 2507": "M.QWEN3_4B_INSTRUCT_2507",
-  "Qwen3 VL 32B Instruct": "M.QWEN3_VL_32B_INSTRUCT",
-  "Qwen3 VL 8B Instruct": "M.QWEN3_VL_8B_INSTRUCT",
-  "Qwen3 VL 4B Instruct": "M.QWEN3_VL_4B_INSTRUCT",
+  "Qwen3.8 27B": "M.QWEN3_8_27B",
+  "Qwen3.8-Flash-Next": "M.QWEN3_8_FLASH_NEXT",
 };
 
 // ---------------------------------------------------------------------------
@@ -270,42 +246,18 @@ function tsQuant(q: string): string {
 }
 
 function buildGgufBlock(results: FetchedResult[]): string {
-  const nonVision = results.filter((r) => !r.entry.isVision);
-  const lines = nonVision
+  const lines = results
     .map(
       ({ entry, ggufGb }) =>
-        `  { name: ${tsKey(entry.name)}, quantization: ${tsQuant(entry.quantization)}, actualGb: ${ggufGb} },`,
+        `  { name: ${tsKey(entry.name)}, quantization: ${tsQuant(entry.quantization)}, actualGb: ${Math.round((ggufGb + (entry.adapterGb ?? 0)) * 100) / 100} },`,
     )
     .join("\n");
 
   return (
     `// Actual GGUF file sizes sourced from Hugging Face via HEAD requests (${currentDate()}).\n` +
-    `// Vision models are excluded here because calculateFileSizeGb intentionally adds\n` +
-    `// a 1.9 GB adapter overhead on top of the base GGUF — testing them against the\n` +
-    `// raw GGUF size alone would produce a false failure.\n` +
+    `// Includes the separate vision adapter (mmproj) where the model ships one.\n` +
     `// Tolerance is ±8 % to allow for minor upstream file changes without false failures.\n` +
     `const ACTUAL_GGUF_SIZES_GB: Array<{\n` +
-    `  name: ModelName;\n` +
-    `  quantization: string;\n` +
-    `  actualGb: number;\n` +
-    `}> = [\n` +
-    lines +
-    `\n];`
-  );
-}
-
-function buildVisionBlock(results: FetchedResult[]): string {
-  const vision = results.filter((r) => r.entry.isVision);
-  const lines = vision
-    .map(
-      ({ entry, ggufGb }) =>
-        `  { name: ${tsKey(entry.name)}, quantization: ${tsQuant(entry.quantization)}, actualGb: ${ggufGb} + ${VISION_ADAPTER_GB} },`,
-    )
-    .join("\n");
-
-  return (
-    `// Vision models: actual GGUF size + ${VISION_ADAPTER_GB} GB assumed adapter overhead.\n` +
-    `const ACTUAL_VISION_SIZES_GB: Array<{\n` +
     `  name: ModelName;\n` +
     `  quantization: string;\n` +
     `  actualGb: number;\n` +
@@ -320,10 +272,7 @@ function buildRuntimeSizeBlock(results: FetchedResult[]): string {
     .map(({ entry, ggufGb }) => ({
       name: entry.name,
       quantization: entry.quantization,
-      sizeGb:
-        Math.round(
-          (ggufGb + (entry.isVision ? VISION_ADAPTER_GB : 0)) * 100,
-        ) / 100,
+      sizeGb: Math.round((ggufGb + (entry.adapterGb ?? 0)) * 100) / 100,
     }))
     .sort((left, right) => left.name.localeCompare(right.name));
 
@@ -357,9 +306,6 @@ function currentDate(): string {
 const GGUF_BLOCK_RE =
   /\/\/ Actual GGUF file sizes[\s\S]*?const ACTUAL_GGUF_SIZES_GB[\s\S]*?^\];/m;
 
-const VISION_BLOCK_RE =
-  /\/\/ Vision models: actual GGUF[\s\S]*?const ACTUAL_VISION_SIZES_GB[\s\S]*?^\];/m;
-
 const RUNTIME_SIZE_BLOCK_RE =
   /\/\/ This block is auto-generated by `bun run models:update`\.[\s\S]*?export const MODEL_SIZE_ESTIMATES_GB[\s\S]*?^\];/m;
 
@@ -367,7 +313,6 @@ function patchTestFile(filePath: string, results: FetchedResult[]): void {
   let source = readFileSync(filePath, "utf-8");
 
   const ggufBlock = buildGgufBlock(results);
-  const visionBlock = buildVisionBlock(results);
 
   if (!GGUF_BLOCK_RE.test(source)) {
     throw new Error(
@@ -375,14 +320,7 @@ function patchTestFile(filePath: string, results: FetchedResult[]): void {
     );
   }
 
-  if (!VISION_BLOCK_RE.test(source)) {
-    throw new Error(
-      "Could not locate ACTUAL_VISION_SIZES_GB block in test file.",
-    );
-  }
-
   source = source.replace(GGUF_BLOCK_RE, ggufBlock);
-  source = source.replace(VISION_BLOCK_RE, visionBlock);
 
   writeFileSync(filePath, source, "utf-8");
   console.log(`\n✓ Patched ${filePath}`);

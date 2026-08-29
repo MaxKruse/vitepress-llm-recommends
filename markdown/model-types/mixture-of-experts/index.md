@@ -67,7 +67,7 @@ You don't need to find them manually. The `llama.cpp` tool added a flag, `--fit 
 
 Simply run llama-server with the flag, e.g.
 
-> llama-server -m "C:/Models/Qwen3.5-9B-Q4_K_M.gguf" --fit on -c 4096
+> llama-server -m "C:/Models/Qwen3.6-35B-A3B-Q4_K_M.gguf" --fit on -c 4096
 
 And it will automatically try (at least on single-GPU setups) to find the optimal load parameters for your hardware, and optimized for speed. By default it does take into account a 1GB VRAM buffer for your OS and other processes, which you can adjust by using `--fit-target <Number in MB>`.
 

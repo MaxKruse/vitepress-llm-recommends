@@ -23,3 +23,9 @@ One part of this answer is the relative **ease of training and iteration**. The 
 Another, more important difference, is **parameter efficiency**. In an MoE, different experts (which are themselves small dense models) might learn to store similar information, leading to potential *redundancy*. In a dense model, all parameters are interconnected and used for every input. This means a 24B dense model may store knowledge with less redundancy than a 24B MoE model.
 
 Therefore, if **knowledge density** (the amount of unique information stored per parameter) is the main priority, a dense model can be more parameter-efficient, though this comes at the significant cost of slower inference.
+
+## Can a dense model run when it does not fit in VRAM?
+
+Yes - but it runs slower. llama.cpp can split a dense model's layers between GPU (VRAM) and system RAM, and `--fit on` finds the best split for your hardware, the same way it does for MoE models. The hard requirement is that the **entire model file** fits in your combined RAM + VRAM (minus OS overhead), not that it fits in VRAM alone.
+
+The catch: because **every parameter is active for every token**, each layer that stays in RAM slows every single token. An offloaded dense model approaches CPU-only speed - unlike an MoE model, where only the small active expert set is touched per token. That is why a dense model that fully fits in VRAM feels like a different experience from one that only partly fits.
