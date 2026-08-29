@@ -11,7 +11,6 @@ import {
   calculateFileSizeGb,
   getLmStudioUri,
   getUsageHighlightState,
-  hasVisionAdapter,
 } from './utils'
 
 const props = defineProps<{
@@ -108,7 +107,6 @@ function itemMatchesHighlightedUsage(item: AggregatedRecommendation) {
               <td :class="$style.modelCell">
                 <div :class="$style.modelMain">
                   <strong :class="$style.modelName">{{ item.name }}</strong>
-                  <span v-if="hasVisionAdapter(item.name)" :class="$style.visionBadge">Vision</span>
                 </div>
 
                 <div :class="$style.modelDetails">
@@ -367,18 +365,6 @@ function itemMatchesHighlightedUsage(item: AggregatedRecommendation) {
 .dot {
   color: var(--vp-c-text-2);
   font-size: 0.73rem;
-}
-
-.visionBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.08rem 0.3rem;
-  border: 1px solid var(--vp-c-border);
-  border-radius: 5px;
-  background: var(--vp-c-bg-soft);
-  color: var(--vp-c-text-2);
-  font-size: 0.64rem;
-  font-weight: 600;
 }
 
 .quant {

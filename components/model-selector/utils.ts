@@ -21,14 +21,13 @@ const MIN_FREE_FOR_CONTEXT_GB = 2;
 
 // Display priority for model sorting (lower number = higher rank).
 const MODEL_DISPLAY_PRIORITY: Record<string, number> = {
-  "Qwen3.6 27B": 0,
-  "Qwen3 Coder Next": 1,
+  "Qwen3.8 27B": 0,
+  "Qwen3.8-Flash-Next": 1,
   "Qwen3.6 35B A3B": 2,
-  "Gemma 4 31B": 3,
+  "Muse Glimmer 30B": 3,
   "Gemma 4 26B A4B": 4,
   "Gemma 4 12B": 5,
-  "Qwen3.5 9B": 6,
-  "LFM2.5 8B A1B": 7,
+  "LFM2.5 8B A1B": 6,
 };
 
 function getSystemVramOverheadGb(totalVramGb: number): number {
@@ -94,20 +93,6 @@ export function getQuantizationLevel(quantization: string): number {
   return 0;
 }
 
-export function hasVisionAdapter(modelName: string): boolean {
-  return /qwen3\s*vl/i.test(modelName);
-}
-
-function getVisionAdapterSize(modelName: string): number {
-  // Separate mmproj adapter files must be loaded alongside the base GGUF.
-  // Adapters range from ~800 MB to ~1.9 GB; we use the upper bound.
-  if (hasVisionAdapter(modelName)) {
-    return 1.9;
-  }
-
-  return 0;
-}
-
 function getQuantizationOverhead(quantization: string): number {
   // K-quantizations use mixed precision (some layers higher than nominal),
   // adding ~15 % overhead over pure weight bytes.
@@ -141,7 +126,7 @@ export function calculateFileSizeGb(
   const baseSize = paramsB * (quantLevel / 8);
   const overhead = getQuantizationOverhead(quantization);
 
-  return baseSize * overhead + getVisionAdapterSize(modelName);
+  return baseSize * overhead;
 }
 
 function resolveModelCandidate(
@@ -168,14 +153,14 @@ function shouldReplaceExisting(
 }
 
 function isMoEModel(modelName: string): boolean {
-  return /\bA\d+B\b/i.test(modelName) || modelName === "Qwen3 Coder Next";
+  return /\bA\d+B\b/i.test(modelName) || modelName === "Qwen3.8-Flash-Next";
 }
 
 function getMoeActiveParamsB(modelName: string): number | null {
   const match = modelName.match(/\bA(\d+(?:\.\d+)?)B\b/i);
   if (match?.[1]) return Number.parseFloat(match[1]);
 
-  if (modelName === "Qwen3 Coder Next") return 3;
+  if (modelName === "Qwen3.8-Flash-Next") return 6;
   return null;
 }
 
@@ -213,8 +198,10 @@ function canFitWithinHardware(
     return availableVramGb >= activeGb + MIN_FREE_FOR_CONTEXT_GB;
   }
 
-  // Dense: model must fit in VRAM with room for at least minimal context.
-  return availableVramGb >= fileSizeGb + MIN_FREE_FOR_CONTEXT_GB;
+  // Dense: the full file must fit in RAM+VRAM combined. llama.cpp splits
+  // layers between GPU and system RAM, so the model runs even when it
+  // exceeds VRAM - just slower, since every active layer in RAM bounds speed.
+  return availableRamGb + availableVramGb >= totalGb;
 }
 
 export function getMatchingRecommendations(
